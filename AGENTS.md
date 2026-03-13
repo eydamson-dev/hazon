@@ -85,9 +85,12 @@ pnpm run lint
 - [x] Book selection UI
 - [x] Chapter navigation
 - [x] Verse display with formatting
+- [x] Verse navigation with selection
+- [x] Verse highlighting
+- [x] Auto-scroll to verse
 - [x] Offline caching
 - [x] State persistence (remembers last read position)
-- [x] Bottom navigation bar
+- [x] Bottom navigation bar (Book, Chapter, Verse, Translation)
 - [x] Theme switcher (light/dark/system)
 - [x] Fix modal styling
 
