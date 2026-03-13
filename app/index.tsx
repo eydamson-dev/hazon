@@ -424,8 +424,6 @@ export default function BibleScreen() {
                     onPress={() => {
                       if (selectedVerses.size > 0) {
                         toggleVerseSelection(verseNum);
-                      } else if (highlightedVerses.has(verseNum)) {
-                        removeHighlight(verseNum);
                       } else {
                         setLocalCurrentVerse(verseNum);
                       }
