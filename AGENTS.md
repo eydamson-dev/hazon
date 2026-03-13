@@ -67,12 +67,14 @@ pnpm run lint
 - `index.tsx` - Bible reader (main screen)
 - `search.tsx` - Search (placeholder)
 - `devotional.tsx` - Devotional (placeholder)
-- `settings.tsx` - Settings (placeholder)
-- `_layout.tsx` - Tab layout with BibleProvider
+- `settings.tsx` - Settings with theme switcher
+- `_layout.tsx` - Tab layout with BibleProvider and ThemeProvider
 
 ### Source (src/)
 - `services/bible.ts` - Bible API service
+- `services/theme.ts` - Theme persistence service
 - `store/BibleContext.tsx` - React Context for Bible state
+- `store/ThemeContext.tsx` - React Context for theme (dark/light/system)
 - `types/bible.ts` - TypeScript types
 
 ## Current Todo List
@@ -86,6 +88,8 @@ pnpm run lint
 - [x] Offline caching
 - [x] State persistence (remembers last read position)
 - [x] Bottom navigation bar
+- [x] Theme switcher (light/dark/system)
+- [x] Fix modal styling
 
 ### In Progress
 - Search functionality
@@ -94,7 +98,6 @@ pnpm run lint
 - Bookmarks/favorites
 - Download Bible versions for offline
 - Devotional section
-- Settings screen
 
 ## Development Notes
 

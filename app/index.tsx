@@ -7,13 +7,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Modal,
-  useColorScheme,
 } from 'react-native';
 import { useBible } from '../src/store/BibleContext';
+import { useTheme } from '../src/store/ThemeContext';
 import type { Book } from '../src/types/bible';
 
 export default function BibleScreen() {
-  const colorScheme = useColorScheme();
+  const { isDark } = useTheme();
   const {
     selectedVersion,
     versions,
@@ -97,14 +97,15 @@ export default function BibleScreen() {
   const newTestament = books.filter((b) => b.order > 39);
 
   const renderBookList = (bookList: Book[], title: string) => (
-    <View style={styles.bookSection}>
-      <Text style={styles.bookSectionTitle}>{title}</Text>
+    <View style={[styles.bookSection, isDark && styles.bookSectionDark]}>
+      <Text style={[styles.bookSectionTitle, isDark && styles.bookSectionTitleDark]}>{title}</Text>
       <View style={styles.bookGrid}>
         {bookList.map((book) => (
           <TouchableOpacity
             key={book.id}
             style={[
               styles.bookItem,
+              isDark && styles.bookItemDark,
               localCurrentBook?.id === book.id && styles.bookItemSelected,
             ]}
             onPress={() => handleBookSelect(book)}
@@ -112,6 +113,7 @@ export default function BibleScreen() {
             <Text
               style={[
                 styles.bookItemText,
+                isDark && styles.bookItemTextDark,
                 localCurrentBook?.id === book.id && styles.bookItemTextSelected,
               ]}
               numberOfLines={1}
@@ -126,7 +128,7 @@ export default function BibleScreen() {
 
   if (isLoading && books.length === 0) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, isDark && styles.containerDark]}>
         <ActivityIndicator size="large" color="#304080" style={styles.loader} />
         <Text style={styles.loadingText}>Loading Bible...</Text>
       </View>
@@ -135,7 +137,7 @@ export default function BibleScreen() {
 
   if (!localCurrentBook) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, isDark && styles.containerDark]}>
         <TouchableOpacity
           style={styles.selectBookButton}
           onPress={handleBookButtonPress}
@@ -143,26 +145,26 @@ export default function BibleScreen() {
           <Text style={styles.selectBookText}>Select a Book</Text>
         </TouchableOpacity>
 
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, isDark && styles.bottomBarDark]}>
           <TouchableOpacity
-            style={styles.versionButton}
+            style={[styles.versionButton, isDark && styles.versionButtonDark]}
             onPress={handleVersionButtonPress}
           >
-            <Text style={styles.versionButtonText}>
+            <Text style={[styles.versionButtonText, isDark && styles.versionButtonTextDark]}>
               {selectedVersion.shortName}
             </Text>
           </TouchableOpacity>
         </View>
 
         <Modal visible={showBookModal} animationType="slide">
-          <View style={[styles.modalContainer, colorScheme === 'dark' && styles.modalContainerDark]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Book</Text>
+          <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
+            <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
+              <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Book</Text>
               <TouchableOpacity onPress={() => setShowBookModal(false)}>
-                <Text style={styles.closeButton}>✕</Text>
+                <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalContent}>
+            <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
               {renderBookList(oldTestament, 'Old Testament')}
               {renderBookList(newTestament, 'New Testament')}
             </ScrollView>
@@ -170,14 +172,14 @@ export default function BibleScreen() {
         </Modal>
 
         <Modal visible={showVersionModal} animationType="slide">
-          <View style={[styles.modalContainer, colorScheme === 'dark' && styles.modalContainerDark]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Translation</Text>
+          <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
+            <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
+              <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Translation</Text>
               <TouchableOpacity onPress={() => setShowVersionModal(false)}>
-                <Text style={styles.closeButton}>✕</Text>
+                <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalContent}>
+            <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
               {versions.map((version) => (
                 <TouchableOpacity
                   key={version.id}
@@ -208,7 +210,7 @@ export default function BibleScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && styles.containerDark]}>
       {isLoading ? (
         <ActivityIndicator size="large" color="#304080" style={styles.loader} />
       ) : error ? (
@@ -216,11 +218,11 @@ export default function BibleScreen() {
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : currentChapter ? (
-        <ScrollView style={styles.chapterContent}>
+        <ScrollView style={[styles.chapterContent, isDark && styles.chapterContentDark]}>
           {currentChapter.chapter.content.map((item, index) => {
             if (item.type === 'heading') {
               return (
-                <Text key={index} style={styles.heading}>
+                <Text key={index} style={[styles.heading, isDark && styles.headingDark]}>
                   {item.content?.join(' ')}
                 </Text>
               );
@@ -229,7 +231,7 @@ export default function BibleScreen() {
               return (
                 <View key={index} style={styles.verse}>
                   <Text style={styles.verseNumber}>{item.number}</Text>
-                  <Text style={styles.verseText}>
+                  <Text style={[styles.verseText, isDark && styles.verseTextDark]}>
                     {renderVerseContent(item.content || [])}
                   </Text>
                 </View>
@@ -243,44 +245,44 @@ export default function BibleScreen() {
         </ScrollView>
       ) : null}
 
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, isDark && styles.bottomBarDark]}>
         <TouchableOpacity
-          style={styles.bookButton}
+          style={[styles.bookButton, isDark && styles.bookButtonDark]}
           onPress={handleBookButtonPress}
         >
-          <Text style={styles.bookButtonText} numberOfLines={1}>
+          <Text style={[styles.bookButtonText, isDark && styles.bookButtonTextDark]} numberOfLines={1}>
             {localCurrentBook?.commonName || 'Select Book'}
           </Text>
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={styles.chapterButton}
+          style={[styles.chapterButton, isDark && styles.chapterButtonDark]}
           onPress={handleChapterButtonPress}
         >
-          <Text style={styles.chapterButtonText}>
+          <Text style={[styles.chapterButtonText, isDark && styles.chapterButtonTextDark]}>
             Ch. {localChapterNum}
           </Text>
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={styles.versionButton}
+          style={[styles.versionButton, isDark && styles.versionButtonDark]}
           onPress={handleVersionButtonPress}
         >
-          <Text style={styles.versionButtonText}>
+          <Text style={[styles.versionButtonText, isDark && styles.versionButtonTextDark]}>
             {selectedVersion.shortName}
           </Text>
         </TouchableOpacity>
       </View>
 
       <Modal visible={showBookModal} animationType="slide">
-        <View style={[styles.modalContainer, colorScheme === 'dark' && styles.modalContainerDark]}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Book</Text>
+        <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
+          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
+            <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Book</Text>
             <TouchableOpacity onPress={() => setShowBookModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
+              <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.modalContent}>
+          <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
             {renderBookList(oldTestament, 'Old Testament')}
             {renderBookList(newTestament, 'New Testament')}
           </ScrollView>
@@ -288,21 +290,22 @@ export default function BibleScreen() {
       </Modal>
 
       <Modal visible={showChapterModal} animationType="slide">
-        <View style={[styles.modalContainer, colorScheme === 'dark' && styles.modalContainerDark]}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Chapter</Text>
+        <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
+          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
+            <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Chapter</Text>
             <TouchableOpacity onPress={() => setShowChapterModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
+              <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.modalContent}>
-            <View style={styles.chapterGrid}>
+          <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
+            <View style={[styles.chapterGrid, isDark && styles.chapterGridDark]}>
               {Array.from({ length: localCurrentBook?.numberOfChapters || 50 }, (_, i) => i + 1).map(
                 (chapter) => (
                   <TouchableOpacity
                     key={chapter}
                     style={[
                       styles.chapterItem,
+                      isDark && styles.chapterItemDark,
                       localChapterNum === chapter && styles.chapterItemSelected,
                     ]}
                     onPress={() => handleChapterSelect(chapter)}
@@ -310,6 +313,7 @@ export default function BibleScreen() {
                     <Text
                       style={[
                         styles.chapterItemText,
+                        isDark && styles.chapterItemTextDark,
                         localChapterNum === chapter && styles.chapterItemTextSelected,
                       ]}
                     >
@@ -324,19 +328,20 @@ export default function BibleScreen() {
       </Modal>
 
       <Modal visible={showVersionModal} animationType="slide">
-        <View style={[styles.modalContainer, colorScheme === 'dark' && styles.modalContainerDark]}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Translation</Text>
+        <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
+          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
+            <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Translation</Text>
             <TouchableOpacity onPress={() => setShowVersionModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
+              <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.modalContent}>
+          <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
             {versions.map((version) => (
               <TouchableOpacity
                 key={version.id}
                 style={[
                   styles.versionItem,
+                  isDark && styles.versionItemDark,
                   selectedVersion.id === version.id && styles.versionItemSelected,
                 ]}
                 onPress={() => handleVersionSelect(version.id)}
@@ -344,6 +349,7 @@ export default function BibleScreen() {
                 <Text
                   style={[
                     styles.versionItemText,
+                    isDark && styles.versionItemTextDark,
                     selectedVersion.id === version.id && styles.versionItemTextSelected,
                   ]}
                 >
@@ -366,6 +372,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  containerDark: {
+    backgroundColor: '#121212',
+  },
   loadingText: {
     textAlign: 'center',
     marginTop: 10,
@@ -385,6 +394,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  chapterContentDark: {
+    backgroundColor: '#121212',
+  },
   heading: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -392,6 +404,9 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 12,
     textAlign: 'center',
+  },
+  headingDark: {
+    color: '#6B8FE8',
   },
   verse: {
     flexDirection: 'row',
@@ -408,6 +423,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 26,
     color: '#333',
+  },
+  verseTextDark: {
+    color: '#ddd',
   },
   lineBreak: {
     height: 8,
@@ -433,6 +451,10 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
     gap: 8,
   },
+  bottomBarDark: {
+    backgroundColor: '#1e1e1e',
+    borderTopColor: '#333',
+  },
   bookButton: {
     flex: 2,
     backgroundColor: '#304080',
@@ -440,38 +462,56 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
+  bookButtonDark: {
+    backgroundColor: '#304080',
+  },
   bookButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
   },
+  bookButtonTextDark: {
+    color: '#fff',
+  },
   chapterButton: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#304080',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  chapterButtonDark: {
+    backgroundColor: '#1e1e1e',
     borderWidth: 1,
-    borderColor: '#304080',
+    borderColor: '#444',
   },
   chapterButtonText: {
-    color: '#304080',
+    color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  chapterButtonTextDark: {
+    color: '#ddd',
   },
   versionButton: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#304080',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  versionButtonDark: {
+    backgroundColor: '#1e1e1e',
     borderWidth: 1,
-    borderColor: '#666',
+    borderColor: '#444',
   },
   versionButtonText: {
-    color: '#333',
+    color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  versionButtonTextDark: {
+    color: '#ddd',
   },
   modalContainer: {
     flex: 1,
@@ -487,26 +527,49 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    backgroundColor: '#fff',
+  },
+  modalHeaderDark: {
+    borderBottomColor: '#333',
+    backgroundColor: '#1e1e1e',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#333',
+  },
+  modalTitleDark: {
+    color: '#fff',
   },
   closeButton: {
     fontSize: 24,
     color: '#666',
+    padding: 4,
+  },
+  closeButtonDark: {
+    color: '#999',
   },
   modalContent: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalContentDark: {
+    backgroundColor: '#121212',
   },
   bookSection: {
     padding: 16,
+  },
+  bookSectionDark: {
+    backgroundColor: '#121212',
   },
   bookSectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#304080',
     marginBottom: 12,
+  },
+  bookSectionTitleDark: {
+    color: '#6B8FE8',
   },
   bookGrid: {
     flexDirection: 'row',
@@ -521,6 +584,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
+  bookItemDark: {
+    backgroundColor: '#2a2a2a',
+  },
   bookItemSelected: {
     backgroundColor: '#304080',
   },
@@ -528,6 +594,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333',
     textAlign: 'center',
+  },
+  bookItemTextDark: {
+    color: '#ddd',
   },
   bookItemTextSelected: {
     color: '#fff',
@@ -538,6 +607,9 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 8,
   },
+  chapterGridDark: {
+    backgroundColor: '#121212',
+  },
   chapterItem: {
     width: 60,
     height: 60,
@@ -546,12 +618,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     borderRadius: 8,
   },
+  chapterItemDark: {
+    backgroundColor: '#2a2a2a',
+  },
   chapterItemSelected: {
     backgroundColor: '#304080',
   },
   chapterItemText: {
     fontSize: 16,
     color: '#333',
+  },
+  chapterItemTextDark: {
+    color: '#ddd',
   },
   chapterItemTextSelected: {
     color: '#fff',
@@ -565,12 +643,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  versionItemDark: {
+    borderBottomColor: '#333',
+    backgroundColor: '#1e1e1e',
+  },
   versionItemSelected: {
     backgroundColor: '#f0f4f8',
   },
   versionItemText: {
     fontSize: 16,
     color: '#333',
+  },
+  versionItemTextDark: {
+    color: '#ddd',
   },
   versionItemTextSelected: {
     color: '#304080',
@@ -579,5 +664,8 @@ const styles = StyleSheet.create({
   downloadedBadge: {
     fontSize: 12,
     color: '#304080',
+  },
+  downloadedBadgeDark: {
+    color: '#6B8FE8',
   },
 });
