@@ -1,11 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Alert, Clipboard } from 'react-native';
 import { YStack, XStack, Spinner } from 'tamagui';
 import { useBible } from '../src/store/BibleContext';
 import { useTheme } from '../src/store/ThemeContext';
+import { getHighlights, saveHighlights, type HighlightData } from '../src/services/theme';
 import type { Book } from '../src/types/bible';
 
 const PRIMARY_COLOR = '#304080';
+
+type HighlightKey = string;
+
+const HIGHLIGHT_COLORS = [
+  { name: 'Yellow', value: '#FFF59D' },
+  { name: 'Green', value: '#A5D6A7' },
+  { name: 'Blue', value: '#90CAF9' },
+  { name: 'Pink', value: '#F48FB1' },
+  { name: 'Orange', value: '#FFCC80' },
+  { name: 'Purple', value: '#CE93D8' },
+];
 
 export default function BibleScreen() {
   const { isDark } = useTheme();
@@ -31,8 +43,59 @@ export default function BibleScreen() {
   const [localCurrentBook, setLocalCurrentBook] = useState<Book | null>(null);
   const [localChapterNum, setLocalChapterNum] = useState(1);
   const [localCurrentVerse, setLocalCurrentVerse] = useState(1);
+  const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
+  const [highlightedVersesMap, setHighlightedVersesMap] = useState<Map<HighlightKey, Map<number, string>>>(new Map());
   const scrollViewRef = useRef<ScrollView>(null);
   const versePositionsRef = useRef<{ [key: number]: number }>({});
+  const isInitialized = useRef(false);
+
+  useEffect(() => {
+    const loadHighlights = async () => {
+      const savedHighlights = await getHighlights();
+      const map = new Map<HighlightKey, Map<number, string>>();
+      for (const [key, verses] of Object.entries(savedHighlights)) {
+        const verseMap = new Map<number, string>();
+        for (const [verseNum, color] of Object.entries(verses)) {
+          verseMap.set(parseInt(verseNum), color);
+        }
+        map.set(key, verseMap);
+      }
+      setHighlightedVersesMap(map);
+      isInitialized.current = true;
+    };
+    loadHighlights();
+  }, []);
+
+  const getHighlightKey = (): HighlightKey => {
+    return `${localCurrentBook?.id || ''}-${localChapterNum}`;
+  };
+
+  const getCurrentHighlights = (): Map<number, string> => {
+    return highlightedVersesMap.get(getHighlightKey()) || new Map();
+  };
+
+  const setCurrentHighlights = (highlights: Map<number, string>) => {
+    setHighlightedVersesMap((prev) => {
+      const newMap = new Map(prev);
+      if (highlights.size > 0) {
+        newMap.set(getHighlightKey(), highlights);
+      } else {
+        newMap.delete(getHighlightKey());
+      }
+      
+      if (isInitialized.current) {
+        const data: HighlightData = {};
+        for (const [key, verseMap] of newMap) {
+          data[key] = Object.fromEntries(verseMap);
+        }
+        saveHighlights(data);
+      }
+      
+      return newMap;
+    });
+  };
+
+  const [highlightedVerses, setHighlightedVerses] = useState<Map<number, string>>(new Map());
 
   useEffect(() => {
     if (currentBook) {
@@ -45,9 +108,109 @@ export default function BibleScreen() {
   }, [currentChapterNum]);
 
   useEffect(() => {
+    if (localCurrentBook) {
+      setHighlightedVerses(getCurrentHighlights());
+    }
     setLocalCurrentVerse(1);
     versePositionsRef.current = {};
-  }, [localChapterNum]);
+    setSelectedVerses(new Set());
+  }, [localChapterNum, localCurrentBook?.id]);
+
+  const applyHighlight = (color: string) => {
+    const newHighlighted = new Map(getCurrentHighlights());
+    for (const verseNum of selectedVerses) {
+      newHighlighted.set(verseNum, color);
+    }
+    setCurrentHighlights(newHighlighted);
+    setHighlightedVerses(newHighlighted);
+    setSelectedVerses(new Set());
+  };
+
+  const removeHighlight = (verseNum: number) => {
+    const newHighlighted = new Map(getCurrentHighlights());
+    newHighlighted.delete(verseNum);
+    setCurrentHighlights(newHighlighted);
+    setHighlightedVerses(newHighlighted);
+  };
+
+  const toggleVerseSelection = (verseNum: number) => {
+    setSelectedVerses((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(verseNum)) {
+        newSet.delete(verseNum);
+      } else {
+        newSet.add(verseNum);
+      }
+      return newSet;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedVerses(new Set());
+  };
+
+  const getVerseRangeString = (): string => {
+    if (selectedVerses.size === 0) return '';
+    const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
+    if (sorted.length === 1) return `v${sorted[0]}`;
+    
+    let range = '';
+    let start = sorted[0];
+    let prev = sorted[0];
+    
+    for (let i = 1; i <= sorted.length; i++) {
+      const curr = sorted[i];
+      if (curr !== prev + 1 || i === sorted.length) {
+        if (range) range += ', ';
+        range += start === prev ? `${start}` : `${start}-${prev}`;
+        start = curr;
+      }
+      prev = curr;
+    }
+    return `v${range}`;
+  };
+
+  const getSelectedVersesText = (): string => {
+    if (!currentChapter || selectedVerses.size === 0) return '';
+    
+    const sortedVerses = Array.from(selectedVerses).sort((a, b) => a - b);
+    const verses: string[] = [];
+    
+    for (const verseNum of sortedVerses) {
+      const verseItem = currentChapter.chapter.content.find(
+        (item) => item.type === 'verse' && item.number === verseNum
+      );
+      if (verseItem) {
+        verses.push(`${verseNum}. ${renderVerseContent(verseItem.content || [])}`);
+      }
+    }
+    
+    const bookName = localCurrentBook?.commonName || '';
+    return `${bookName} ${localChapterNum}:${sortedVerses.join(',')}\n\n${verses.join('\n\n')}`;
+  };
+
+  const handleCopy = () => {
+    const text = getSelectedVersesText();
+    if (text) {
+      Clipboard.setString(text);
+      Alert.alert('Copied', 'Verses copied to clipboard');
+      clearSelection();
+    }
+  };
+
+  const handleShare = async () => {
+    const text = getSelectedVersesText();
+    if (text) {
+      try {
+        await Share.share({
+          message: text,
+        });
+        clearSelection();
+      } catch (error) {
+        console.log('Share error:', error);
+      }
+    }
+  };
 
   const handleVerseSelect = (verse: number) => {
     setLocalCurrentVerse(verse);
@@ -243,21 +406,74 @@ export default function BibleScreen() {
             }
             if (item.type === 'verse') {
               const verseNum = item.number || 0;
+              const isSelected = selectedVerses.has(verseNum);
+              const highlightColor = highlightedVerses.get(verseNum);
+              const lastSelectedVerse = selectedVerses.size > 0 ? Math.max(...selectedVerses) : 0;
+              const showToolbarHere = selectedVerses.size > 0 && lastSelectedVerse === verseNum;
+              
               return (
-                <View 
-                  key={index}
-                  style={[
-                    styles.verse,
-                    localCurrentVerse === verseNum && styles.verseHighlight,
-                  ]}
-                  onLayout={(e) => {
-                    versePositionsRef.current[verseNum] = e.nativeEvent.layout.y;
-                  }}
-                >
-                  <Text style={styles.verseNumber}>{item.number}</Text>
-                  <Text style={styles.verseText}>
-                    {renderVerseContent(item.content || [])}
-                  </Text>
+                <View key={index}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.verse,
+                      localCurrentVerse === verseNum && styles.verseHighlight,
+                      isSelected && styles.verseSelected,
+                      highlightColor && { backgroundColor: highlightColor },
+                    ]}
+                    onLongPress={() => toggleVerseSelection(verseNum)}
+                    onPress={() => {
+                      if (selectedVerses.size > 0) {
+                        toggleVerseSelection(verseNum);
+                      } else if (highlightedVerses.has(verseNum)) {
+                        removeHighlight(verseNum);
+                      } else {
+                        setLocalCurrentVerse(verseNum);
+                      }
+                    }}
+                    onLayout={(e) => {
+                      versePositionsRef.current[verseNum] = e.nativeEvent.layout.y;
+                    }}
+                  >
+                    <Text style={[styles.verseNumber, isSelected && styles.verseNumberSelected]}>{item.number}</Text>
+                    <Text style={[styles.verseText, isSelected && styles.verseTextSelected]}>
+                      {renderVerseContent(item.content || [])}
+                    </Text>
+                  </TouchableOpacity>
+                  {showToolbarHere && (
+                    <View>
+                      <View style={[styles.selectionToolbar, isDark && styles.selectionToolbarDark]}>
+                        <Text style={styles.selectionText}>{getVerseRangeString()}</Text>
+                        <XStack gap="$2">
+                          <TouchableOpacity style={styles.toolbarButton} onPress={handleCopy}>
+                            <Text style={styles.toolbarButtonText}>Copy</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.toolbarButton} onPress={handleShare}>
+                            <Text style={styles.toolbarButtonText}>Share</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.toolbarButton} onPress={clearSelection}>
+                            <Text style={[styles.toolbarButtonText, { color: '#ff4444' }]}>Cancel</Text>
+                          </TouchableOpacity>
+                        </XStack>
+                      </View>
+                      <View style={[styles.colorPickerBar, isDark && styles.colorPickerBarDark]}>
+                        <XStack gap="$2" justifyContent="center">
+                          {HIGHLIGHT_COLORS.map((color) => (
+                            <TouchableOpacity
+                              key={color.value}
+                              style={[styles.colorButton, { backgroundColor: color.value }]}
+                              onPress={() => applyHighlight(color.value)}
+                            />
+                          ))}
+                          <TouchableOpacity
+                            style={[styles.colorButton, styles.noHighlightButton]}
+                            onPress={() => applyHighlight('transparent')}
+                          >
+                            <Text style={styles.noHighlightText}>✕</Text>
+                          </TouchableOpacity>
+                        </XStack>
+                      </View>
+                    </View>
+                  )}
                 </View>
               );
             }
@@ -626,5 +842,71 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  selectionToolbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f0f4ff',
+    borderBottomWidth: 1,
+    borderBottomColor: PRIMARY_COLOR,
+  },
+  selectionToolbarDark: {
+    backgroundColor: '#1a2a4a',
+  },
+  selectionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: PRIMARY_COLOR,
+  },
+  toolbarButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 4,
+  },
+  toolbarButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  colorPickerBar: {
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  colorPickerBarDark: {
+    backgroundColor: '#2a2a2a',
+    borderBottomColor: '#444',
+  },
+  verseSelected: {
+    backgroundColor: isDark ? '#1a2a4a' : '#e8f0ff',
+    borderRadius: 4,
+  },
+  verseNumberSelected: {
+    color: PRIMARY_COLOR,
+    fontWeight: '700',
+  },
+  verseTextSelected: {
+    color: PRIMARY_COLOR,
+  },
+  colorButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  noHighlightButton: {
+    backgroundColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noHighlightText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
