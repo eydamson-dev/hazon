@@ -1,16 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Modal,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { YStack, XStack, Spinner } from 'tamagui';
 import { useBible } from '../src/store/BibleContext';
 import { useTheme } from '../src/store/ThemeContext';
 import type { Book } from '../src/types/bible';
+
+const PRIMARY_COLOR = '#304080';
 
 export default function BibleScreen() {
   const { isDark } = useTheme();
@@ -91,18 +86,6 @@ export default function BibleScreen() {
     setShowVersionModal(false);
   };
 
-  const handleBookButtonPress = () => {
-    setShowBookModal(true);
-  };
-
-  const handleChapterButtonPress = () => {
-    setShowChapterModal(true);
-  };
-
-  const handleVersionButtonPress = () => {
-    setShowVersionModal(true);
-  };
-
   const renderVerseContent = (content: any[]): string => {
     return content
       .map((item) => {
@@ -116,16 +99,17 @@ export default function BibleScreen() {
   const oldTestament = books.filter((b) => b.order <= 39);
   const newTestament = books.filter((b) => b.order > 39);
 
+  const styles = createStyles(isDark);
+
   const renderBookList = (bookList: Book[], title: string) => (
-    <View style={[styles.bookSection, isDark && styles.bookSectionDark]}>
-      <Text style={[styles.bookSectionTitle, isDark && styles.bookSectionTitleDark]}>{title}</Text>
-      <View style={styles.bookGrid}>
+    <YStack padding="$4">
+      <Text style={styles.bookSectionTitle}>{title}</Text>
+      <XStack flexWrap="wrap" gap="$2">
         {bookList.map((book) => (
           <TouchableOpacity
             key={book.id}
             style={[
               styles.bookItem,
-              isDark && styles.bookItemDark,
               localCurrentBook?.id === book.id && styles.bookItemSelected,
             ]}
             onPress={() => handleBookSelect(book)}
@@ -133,7 +117,6 @@ export default function BibleScreen() {
             <Text
               style={[
                 styles.bookItemText,
-                isDark && styles.bookItemTextDark,
                 localCurrentBook?.id === book.id && styles.bookItemTextSelected,
               ]}
               numberOfLines={1}
@@ -142,14 +125,14 @@ export default function BibleScreen() {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
-    </View>
+      </XStack>
+    </YStack>
   );
 
   if (isLoading && books.length === 0) {
     return (
-      <View style={[styles.container, isDark && styles.containerDark]}>
-        <ActivityIndicator size="large" color="#304080" style={styles.loader} />
+      <View style={styles.container}>
+        <Spinner size="large" color={PRIMARY_COLOR} />
         <Text style={styles.loadingText}>Loading Bible...</Text>
       </View>
     );
@@ -157,34 +140,34 @@ export default function BibleScreen() {
 
   if (!localCurrentBook) {
     return (
-      <View style={[styles.container, isDark && styles.containerDark]}>
-        <TouchableOpacity
-          style={styles.selectBookButton}
-          onPress={handleBookButtonPress}
-        >
-          <Text style={styles.selectBookText}>Select a Book</Text>
-        </TouchableOpacity>
-
-        <View style={[styles.bottomBar, isDark && styles.bottomBarDark]}>
+      <View style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <TouchableOpacity
-            style={[styles.versionButtonSmall, isDark && styles.versionButtonDark]}
-            onPress={handleVersionButtonPress}
+            style={styles.selectBookButton}
+            onPress={() => setShowBookModal(true)}
           >
-            <Text style={[styles.versionButtonText, isDark && styles.versionButtonTextDark]}>
-              {selectedVersion.shortName}
-            </Text>
+            <Text style={styles.selectBookButtonText}>Select a Book</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={styles.versionButtonBottom}
+            onPress={() => setShowVersionModal(true)}
+          >
+            <Text style={styles.bottomButtonText}>{selectedVersion.shortName}</Text>
           </TouchableOpacity>
         </View>
 
         <Modal visible={showBookModal} animationType="slide">
-          <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
-            <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
-              <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Book</Text>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Book</Text>
               <TouchableOpacity onPress={() => setShowBookModal(false)}>
-                <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
+                <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
+            <ScrollView style={styles.modalContent}>
               {renderBookList(oldTestament, 'Old Testament')}
               {renderBookList(newTestament, 'New Testament')}
             </ScrollView>
@@ -192,14 +175,14 @@ export default function BibleScreen() {
         </Modal>
 
         <Modal visible={showVersionModal} animationType="slide">
-          <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
-            <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
-              <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Translation</Text>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Translation</Text>
               <TouchableOpacity onPress={() => setShowVersionModal(false)}>
-                <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
+                <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
+            <ScrollView style={styles.modalContent}>
               {versions.map((version) => (
                 <TouchableOpacity
                   key={version.id}
@@ -230,16 +213,18 @@ export default function BibleScreen() {
   }
 
   return (
-    <View style={[styles.container, isDark && styles.containerDark]}>
+    <View style={styles.container}>
       {isLoading ? (
-        <ActivityIndicator size="large" color="#304080" style={styles.loader} />
+        <View style={styles.loaderContainer}>
+          <Spinner size="large" color={PRIMARY_COLOR} />
+        </View>
       ) : error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : currentChapter ? (
         <ScrollView 
-          style={[styles.chapterContent, isDark && styles.chapterContentDark]}
+          style={styles.chapterContent}
           ref={scrollViewRef}
           onContentSizeChange={() => {
             const yPosition = versePositionsRef.current[localCurrentVerse];
@@ -251,7 +236,7 @@ export default function BibleScreen() {
           {currentChapter.chapter.content.map((item, index) => {
             if (item.type === 'heading') {
               return (
-                <Text key={index} style={[styles.heading, isDark && styles.headingDark]}>
+                <Text key={index} style={styles.heading}>
                   {item.content?.join(' ')}
                 </Text>
               );
@@ -260,17 +245,17 @@ export default function BibleScreen() {
               const verseNum = item.number || 0;
               return (
                 <View 
-                  key={index} 
+                  key={index}
                   style={[
                     styles.verse,
-                    localCurrentVerse === verseNum && (isDark ? styles.verseHighlightDark : styles.verseHighlight)
+                    localCurrentVerse === verseNum && styles.verseHighlight,
                   ]}
                   onLayout={(e) => {
                     versePositionsRef.current[verseNum] = e.nativeEvent.layout.y;
                   }}
                 >
-                  <Text style={[styles.verseNumber, isDark && styles.verseNumberDark]}>{item.number}</Text>
-                  <Text style={[styles.verseText, isDark && styles.verseTextDark]}>
+                  <Text style={styles.verseNumber}>{item.number}</Text>
+                  <Text style={styles.verseText}>
                     {renderVerseContent(item.content || [])}
                   </Text>
                 </View>
@@ -284,54 +269,53 @@ export default function BibleScreen() {
         </ScrollView>
       ) : null}
 
-      <View style={[styles.bottomBar, isDark && styles.bottomBarDark]}>
+      <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={[styles.bookButtonSmall, isDark && styles.bookButtonDark]}
-          onPress={handleBookButtonPress}
+          style={[styles.bottomButton, { flex: 2 }]}
+          onPress={() => setShowBookModal(true)}
         >
-          <Text style={[styles.bookButtonTextSmall, isDark && styles.bookButtonTextDark]} numberOfLines={1}>
+          <Text style={styles.bottomButtonText} numberOfLines={1}>
             {localCurrentBook?.commonName || 'Book'}
           </Text>
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.chapterButtonSmall, isDark && styles.chapterButtonDark]}
-          onPress={handleChapterButtonPress}
+          style={[styles.bottomButton, { flex: 1 }]}
+          onPress={() => setShowChapterModal(true)}
         >
-          <Text style={[styles.chapterButtonTextSmall, isDark && styles.chapterButtonTextDark]}>
+          <Text style={styles.bottomButtonText}>
             Ch. {localChapterNum}
           </Text>
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.verseButton, isDark && styles.verseButtonDark]}
+          style={[styles.bottomButton, { minWidth: 50 }]}
           onPress={() => setShowVerseModal(true)}
         >
-          <Text style={[styles.verseButtonText, isDark && styles.verseButtonTextDark]}>
+          <Text style={styles.bottomButtonText}>
             v. {localCurrentVerse}
           </Text>
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.versionButtonSmall, isDark && styles.versionButtonDark]}
-          onPress={handleVersionButtonPress}
+          style={[styles.bottomButton, { minWidth: 70 }]}
+          onPress={() => setShowVersionModal(true)}
         >
-          <Text style={[styles.versionButtonText, isDark && styles.versionButtonTextDark]}>
+          <Text style={styles.bottomButtonText} numberOfLines={1}>
             {selectedVersion.shortName}
           </Text>
         </TouchableOpacity>
-
       </View>
 
       <Modal visible={showBookModal} animationType="slide">
-        <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
-          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
-            <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Book</Text>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Book</Text>
             <TouchableOpacity onPress={() => setShowBookModal(false)}>
-              <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
+              <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
+          <ScrollView style={styles.modalContent}>
             {renderBookList(oldTestament, 'Old Testament')}
             {renderBookList(newTestament, 'New Testament')}
           </ScrollView>
@@ -339,22 +323,21 @@ export default function BibleScreen() {
       </Modal>
 
       <Modal visible={showChapterModal} animationType="slide">
-        <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
-          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
-            <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Chapter</Text>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Chapter</Text>
             <TouchableOpacity onPress={() => setShowChapterModal(false)}>
-              <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
+              <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
-            <View style={[styles.chapterGrid, isDark && styles.chapterGridDark]}>
+          <ScrollView style={styles.modalContent}>
+            <XStack flexWrap="wrap" padding="$4" gap="$2">
               {Array.from({ length: localCurrentBook?.numberOfChapters || 50 }, (_, i) => i + 1).map(
                 (chapter) => (
                   <TouchableOpacity
                     key={chapter}
                     style={[
                       styles.chapterItem,
-                      isDark && styles.chapterItemDark,
                       localChapterNum === chapter && styles.chapterItemSelected,
                     ]}
                     onPress={() => handleChapterSelect(chapter)}
@@ -362,7 +345,6 @@ export default function BibleScreen() {
                     <Text
                       style={[
                         styles.chapterItemText,
-                        isDark && styles.chapterItemTextDark,
                         localChapterNum === chapter && styles.chapterItemTextSelected,
                       ]}
                     >
@@ -371,28 +353,27 @@ export default function BibleScreen() {
                   </TouchableOpacity>
                 )
               )}
-            </View>
+            </XStack>
           </ScrollView>
         </View>
       </Modal>
 
       <Modal visible={showVerseModal} animationType="slide">
-        <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
-          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
-            <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Verse</Text>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Verse</Text>
             <TouchableOpacity onPress={() => setShowVerseModal(false)}>
-              <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
+              <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
-            <View style={[styles.chapterGrid, isDark && styles.chapterGridDark]}>
+          <ScrollView style={styles.modalContent}>
+            <XStack flexWrap="wrap" padding="$4" gap="$2">
               {Array.from({ length: currentChapter?.chapter?.content?.filter((item) => item.type === 'verse').length || 30 }, (_, i) => i + 1).map(
                 (verse) => (
                   <TouchableOpacity
                     key={verse}
                     style={[
                       styles.chapterItem,
-                      isDark && styles.chapterItemDark,
                       localCurrentVerse === verse && styles.chapterItemSelected,
                     ]}
                     onPress={() => handleVerseSelect(verse)}
@@ -400,7 +381,6 @@ export default function BibleScreen() {
                     <Text
                       style={[
                         styles.chapterItemText,
-                        isDark && styles.chapterItemTextDark,
                         localCurrentVerse === verse && styles.chapterItemTextSelected,
                       ]}
                     >
@@ -409,26 +389,25 @@ export default function BibleScreen() {
                   </TouchableOpacity>
                 )
               )}
-            </View>
+            </XStack>
           </ScrollView>
         </View>
       </Modal>
 
       <Modal visible={showVersionModal} animationType="slide">
-        <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
-          <View style={[styles.modalHeader, isDark && styles.modalHeaderDark]}>
-            <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>Select Translation</Text>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Translation</Text>
             <TouchableOpacity onPress={() => setShowVersionModal(false)}>
-              <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>✕</Text>
+              <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView style={[styles.modalContent, isDark && styles.modalContentDark]}>
+          <ScrollView style={styles.modalContent}>
             {versions.map((version) => (
               <TouchableOpacity
                 key={version.id}
                 style={[
                   styles.versionItem,
-                  isDark && styles.versionItemDark,
                   selectedVersion.id === version.id && styles.versionItemSelected,
                 ]}
                 onPress={() => handleVersionSelect(version.id)}
@@ -436,7 +415,6 @@ export default function BibleScreen() {
                 <Text
                   style={[
                     styles.versionItemText,
-                    isDark && styles.versionItemTextDark,
                     selectedVersion.id === version.id && styles.versionItemTextSelected,
                   ]}
                 >
@@ -454,116 +432,20 @@ export default function BibleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  containerDark: {
-    backgroundColor: '#121212',
+    backgroundColor: isDark ? '#121212' : '#fff',
   },
   loadingText: {
-    textAlign: 'center',
     marginTop: 10,
-    color: '#666',
+    color: isDark ? '#888' : '#666',
+    textAlign: 'center',
   },
-  selectBookButton: {
+  loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  selectBookText: {
-    fontSize: 18,
-    color: '#304080',
-    fontWeight: '600',
-  },
-  chapterContent: {
-    flex: 1,
-    padding: 16,
-  },
-  chapterContentDark: {
-    backgroundColor: '#121212',
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#304080',
-    marginTop: 16,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  headingDark: {
-    color: '#6B8FE8',
-  },
-  verse: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  verseNumber: {
-    width: 30,
-    fontSize: 12,
-    color: '#304080',
-    fontWeight: '600',
-  },
-  verseText: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: 26,
-    color: '#333',
-  },
-  verseTextDark: {
-    color: '#ddd',
-  },
-  verseHighlight: {
-    backgroundColor: '#e8f0ff',
-    borderRadius: 4,
-  },
-  verseHighlightDark: {
-    backgroundColor: '#1a2a4a',
-    borderRadius: 4,
-  },
-  verseHighlightText: {
-    backgroundColor: '#e8f0ff',
-    borderRadius: 2,
-  },
-  verseHighlightTextDark: {
-    backgroundColor: '#1a2a4a',
-    borderRadius: 2,
-  },
-  verseNumberDark: {
-    color: '#6B8FE8',
-  },
-  verseNumberInline: {
-    color: '#304080',
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  paragraph: {
-    padding: 16,
-  },
-  paragraphDark: {
-    backgroundColor: '#121212',
-  },
-  paragraphText: {
-    fontSize: 16,
-    lineHeight: 28,
-    textAlign: 'justify',
-  },
-  inlineVerse: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 8,
-    paddingVertical: 2,
-  },
-  paragraphBreak: {
-    height: 16,
-  },
-  lineBreak: {
-    height: 8,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
   },
   errorContainer: {
     flex: 1,
@@ -574,122 +456,53 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 16,
   },
+  chapterContent: {
+    flex: 1,
+    padding: 16,
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: PRIMARY_COLOR,
+    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  verse: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    padding: 8,
+    borderRadius: 4,
+  },
+  verseNumber: {
+    width: 30,
+    fontSize: 12,
+    color: PRIMARY_COLOR,
+    fontWeight: '600',
+  },
+  verseText: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 26,
+    color: isDark ? '#ddd' : '#333',
+  },
+  verseHighlight: {
+    backgroundColor: isDark ? '#1a2a4a' : '#e8f0ff',
+  },
+  lineBreak: {
+    height: 8,
+  },
   bottomBar: {
     flexDirection: 'row',
     padding: 8,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: isDark ? '#1e1e1e' : '#f5f5f5',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: isDark ? '#333' : '#e0e0e0',
     gap: 6,
-  },
-  bottomBarDark: {
-    backgroundColor: '#1e1e1e',
-    borderTopColor: '#333',
-  },
-  bookButtonSmall: {
-    flex: 2,
-    backgroundColor: '#304080',
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  bookButtonDark: {
-    backgroundColor: '#304080',
-  },
-  bookButtonTextSmall: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  bookButtonTextDark: {
-    color: '#fff',
-  },
-  verseButton: {
-    width: 44,
-    backgroundColor: '#304080',
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  verseButtonDark: {
-    backgroundColor: '#1e1e1e',
-    borderWidth: 1,
-    borderColor: '#444',
-  },
-  verseButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  verseButtonTextDark: {
-    color: '#ddd',
-  },
-  chapterButtonSmall: {
-    flex: 1,
-    backgroundColor: '#304080',
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  chapterButtonDark: {
-    backgroundColor: '#1e1e1e',
-    borderWidth: 1,
-    borderColor: '#444',
-  },
-  chapterButtonTextSmall: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  chapterButtonTextDark: {
-    color: '#ddd',
-  },
-  versionButtonSmall: {
-    width: 50,
-    backgroundColor: '#304080',
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  versionButtonDark: {
-    backgroundColor: '#1e1e1e',
-    borderWidth: 1,
-    borderColor: '#444',
-  },
-  versionButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  versionButtonTextDark: {
-    color: '#ddd',
-  },
-  displayModeButton: {
-    width: 36,
-    backgroundColor: '#304080',
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  displayModeButtonDark: {
-    backgroundColor: '#1e1e1e',
-    borderWidth: 1,
-    borderColor: '#444',
-  },
-  displayModeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  displayModeButtonTextDark: {
-    color: '#ddd',
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  modalContainerDark: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: isDark ? '#1a1a1a' : '#fff',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -697,110 +510,62 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    backgroundColor: '#fff',
-  },
-  modalHeaderDark: {
-    borderBottomColor: '#333',
-    backgroundColor: '#1e1e1e',
+    borderBottomColor: isDark ? '#333' : '#e0e0e0',
+    backgroundColor: isDark ? '#1e1e1e' : '#fff',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
-  },
-  modalTitleDark: {
-    color: '#fff',
+    color: isDark ? '#fff' : '#333',
   },
   closeButton: {
     fontSize: 24,
-    color: '#666',
+    color: isDark ? '#999' : '#666',
     padding: 4,
-  },
-  closeButtonDark: {
-    color: '#999',
   },
   modalContent: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  modalContentDark: {
-    backgroundColor: '#121212',
-  },
-  bookSection: {
-    padding: 16,
-  },
-  bookSectionDark: {
-    backgroundColor: '#121212',
+    backgroundColor: isDark ? '#121212' : '#fff',
   },
   bookSectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#304080',
+    color: PRIMARY_COLOR,
     marginBottom: 12,
   },
-  bookSectionTitleDark: {
-    color: '#6B8FE8',
-  },
-  bookGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
   bookItem: {
-    width: '30%',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    backgroundColor: '#f5f5f5',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
     borderRadius: 8,
+    minWidth: '30%',
     alignItems: 'center',
   },
-  bookItemDark: {
-    backgroundColor: '#2a2a2a',
-  },
   bookItemSelected: {
-    backgroundColor: '#304080',
+    backgroundColor: PRIMARY_COLOR,
   },
   bookItemText: {
-    fontSize: 12,
-    color: '#333',
+    fontSize: 14,
+    color: isDark ? '#ddd' : '#333',
     textAlign: 'center',
-  },
-  bookItemTextDark: {
-    color: '#ddd',
   },
   bookItemTextSelected: {
     color: '#fff',
-  },
-  chapterGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 16,
-    gap: 8,
-  },
-  chapterGridDark: {
-    backgroundColor: '#121212',
   },
   chapterItem: {
     width: 60,
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
     borderRadius: 8,
   },
-  chapterItemDark: {
-    backgroundColor: '#2a2a2a',
-  },
   chapterItemSelected: {
-    backgroundColor: '#304080',
+    backgroundColor: PRIMARY_COLOR,
   },
   chapterItemText: {
     fontSize: 16,
-    color: '#333',
-  },
-  chapterItemTextDark: {
-    color: '#ddd',
+    color: isDark ? '#ddd' : '#333',
   },
   chapterItemTextSelected: {
     color: '#fff',
@@ -809,34 +574,57 @@ const styles = StyleSheet.create({
   versionItem: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: isDark ? '#333' : '#e0e0e0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  versionItemDark: {
-    borderBottomColor: '#333',
-    backgroundColor: '#1e1e1e',
+    backgroundColor: isDark ? '#1e1e1e' : 'transparent',
   },
   versionItemSelected: {
-    backgroundColor: '#f0f4f8',
+    backgroundColor: isDark ? '#1a2a4a' : '#f0f4ff',
   },
   versionItemText: {
     fontSize: 16,
-    color: '#333',
-  },
-  versionItemTextDark: {
-    color: '#ddd',
+    color: isDark ? '#ddd' : '#333',
   },
   versionItemTextSelected: {
-    color: '#304080',
+    color: PRIMARY_COLOR,
     fontWeight: '600',
   },
   downloadedBadge: {
     fontSize: 12,
-    color: '#304080',
+    color: PRIMARY_COLOR,
   },
-  downloadedBadgeDark: {
-    color: '#6B8FE8',
+  bottomButton: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bottomButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  selectBookButton: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  selectBookButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  versionButtonBottom: {
+    flex: 1,
+    backgroundColor: PRIMARY_COLOR,
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

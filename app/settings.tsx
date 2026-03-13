@@ -1,6 +1,9 @@
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { YStack, XStack, Button, Card } from "tamagui";
 import { useTheme } from "../src/store/ThemeContext";
 import { ThemeMode } from "../src/services/theme";
+
+const PRIMARY_COLOR = '#304080';
 
 export default function Settings() {
   const { theme, isDark, setTheme } = useTheme();
@@ -11,21 +14,22 @@ export default function Settings() {
     { label: 'System', value: 'system', description: 'Follow system settings' },
   ];
 
-  return (
-    <ScrollView style={[styles.container, isDark && styles.containerDark]}>
-      <Text style={[styles.title, isDark && styles.titleDark]}>Settings</Text>
+  const styles = createStyles(isDark);
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Appearance</Text>
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Settings</Text>
+
+      <YStack padding="$4" space="$3">
+        <Text style={styles.sectionTitle}>Appearance</Text>
         
-        <Text style={[styles.label, isDark && styles.labelDark]}>Theme</Text>
+        <Text style={styles.label}>Theme</Text>
         {themeOptions.map((option) => (
           <TouchableOpacity
             key={option.value}
             style={[
               styles.themeOption,
               theme === option.value && styles.themeOptionSelected,
-              isDark && styles.themeOptionDark,
             ]}
             onPress={() => setTheme(option.value)}
           >
@@ -34,12 +38,11 @@ export default function Settings() {
                 style={[
                   styles.themeOptionText,
                   theme === option.value && styles.themeOptionTextSelected,
-                  isDark && styles.themeOptionTextDark,
                 ]}
               >
                 {option.label}
               </Text>
-              <Text style={[styles.themeOptionDesc, isDark && styles.themeOptionDescDark]}>
+              <Text style={styles.themeOptionDesc}>
                 {option.description}
               </Text>
             </View>
@@ -48,115 +51,89 @@ export default function Settings() {
             )}
           </TouchableOpacity>
         ))}
-      </View>
+      </YStack>
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>About</Text>
-        <Text style={[styles.aboutText, isDark && styles.aboutTextDark]}>
-          CJCRSG Bible App{'\n'}
-          Version 1.0.0{'\n\n'}
-          A Bible reading app with multiple translations,{'\n'}
-          devotional content, and study features.
-        </Text>
-      </View>
+      <YStack padding="$4" space="$3">
+        <Text style={styles.sectionTitle}>About</Text>
+        <View style={styles.aboutCard}>
+          <Text style={styles.aboutText}>
+            CJCRSG Bible App{'\n'}
+            Version 1.0.0{'\n\n'}
+            A Bible reading app with multiple translations,{'\n'}
+            devotional content, and study features.
+          </Text>
+        </View>
+      </YStack>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  containerDark: {
-    backgroundColor: '#121212',
+    backgroundColor: isDark ? '#121212' : '#f5f5f5',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#304080',
+    color: PRIMARY_COLOR,
     padding: 20,
     paddingBottom: 10,
-  },
-  titleDark: {
-    color: '#fff',
-  },
-  section: {
-    padding: 20,
-    paddingTop: 0,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: isDark ? '#888' : '#666',
     marginBottom: 12,
     textTransform: 'uppercase',
-  },
-  sectionTitleDark: {
-    color: '#888',
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: isDark ? '#eee' : '#333',
     marginBottom: 8,
-  },
-  labelDark: {
-    color: '#eee',
   },
   themeOption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: isDark ? '#1e1e1e' : '#fff',
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  themeOptionDark: {
-    backgroundColor: '#1e1e1e',
-    borderColor: '#333',
+    borderColor: isDark ? '#333' : '#e0e0e0',
   },
   themeOptionSelected: {
-    borderColor: '#304080',
-    backgroundColor: '#f0f4ff',
+    borderColor: PRIMARY_COLOR,
+    backgroundColor: isDark ? '#1a2a4a' : '#f0f4ff',
   },
   themeOptionText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-  },
-  themeOptionTextDark: {
-    color: '#eee',
+    color: isDark ? '#eee' : '#333',
   },
   themeOptionTextSelected: {
-    color: '#304080',
+    color: PRIMARY_COLOR,
   },
   themeOptionDesc: {
     fontSize: 12,
-    color: '#666',
+    color: isDark ? '#888' : '#666',
     marginTop: 2,
-  },
-  themeOptionDescDark: {
-    color: '#888',
   },
   checkmark: {
     fontSize: 18,
-    color: '#304080',
+    color: PRIMARY_COLOR,
     fontWeight: 'bold',
   },
-  aboutText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 22,
-    backgroundColor: '#fff',
+  aboutCard: {
+    backgroundColor: isDark ? '#1e1e1e' : '#fff',
     padding: 16,
     borderRadius: 12,
   },
-  aboutTextDark: {
-    color: '#888',
-    backgroundColor: '#1e1e1e',
+  aboutText: {
+    fontSize: 14,
+    color: isDark ? '#888' : '#666',
+    lineHeight: 22,
   },
 });

@@ -1,9 +1,12 @@
 import { Tabs } from "expo-router";
+import { TamaguiProvider } from "tamagui";
+import { Ionicons } from "@expo/vector-icons";
+import tamaguiConfig from "../tamagui.config";
+import { ThemeProvider, useTheme as useAppTheme } from "../src/store/ThemeContext";
 import { BibleProvider } from "../src/store/BibleContext";
-import { ThemeProvider, useTheme } from "../src/store/ThemeContext";
 
 function TabLayout() {
-  const { isDark } = useTheme();
+  const { isDark } = useAppTheme();
 
   return (
     <Tabs
@@ -24,6 +27,9 @@ function TabLayout() {
         options={{
           title: "Bible",
           tabBarLabel: "Bible",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -31,6 +37,9 @@ function TabLayout() {
         options={{
           title: "Devotional",
           tabBarLabel: "Devotional",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -38,6 +47,9 @@ function TabLayout() {
         options={{
           title: "Search",
           tabBarLabel: "Search",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="search" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -45,18 +57,31 @@ function TabLayout() {
         options={{
           title: "Settings",
           tabBarLabel: "Settings",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
   );
 }
 
-export default function RootLayout() {
+function ThemedApp() {
+  const { isDark } = useAppTheme();
+
   return (
-    <ThemeProvider>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme={isDark ? "dark" : "light"}>
       <BibleProvider>
         <TabLayout />
       </BibleProvider>
+    </TamaguiProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <ThemedApp />
     </ThemeProvider>
   );
 }

@@ -1,42 +1,34 @@
 import { View, Text, StyleSheet } from "react-native";
+import { YStack } from "tamagui";
 import { useTheme } from "../src/store/ThemeContext";
+
+const PRIMARY_COLOR = '#304080';
 
 export default function Devotional() {
   const { isDark } = useTheme();
+  
+  const styles = createStyles(isDark);
 
   return (
-    <View style={[styles.container, isDark && styles.containerDark]}>
-      <Text style={[styles.title, isDark && styles.titleDark]}>Daily Devotional</Text>
-      <Text style={[styles.placeholder, isDark && styles.placeholderDark]}>Coming soon...</Text>
-    </View>
+    <YStack style={styles.container} flex={1} justifyContent="center" alignItems="center" padding="$4">
+      <Text style={styles.title}>Daily Devotional</Text>
+      <Text style={styles.placeholder}>Coming soon...</Text>
+    </YStack>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (isDark: boolean) => StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: "#fff",
-  },
-  containerDark: {
-    backgroundColor: "#121212",
+    backgroundColor: isDark ? '#121212' : '#fff',
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#304080",
+    color: PRIMARY_COLOR,
     marginBottom: 8,
-  },
-  titleDark: {
-    color: "#fff",
   },
   placeholder: {
     fontSize: 16,
-    color: "#999",
-  },
-  placeholderDark: {
-    color: "#666",
+    color: isDark ? '#666' : '#999',
   },
 });
