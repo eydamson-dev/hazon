@@ -320,6 +320,7 @@ export default function BibleScreen() {
             {selectedVersion.shortName}
           </Text>
         </TouchableOpacity>
+
       </View>
 
       <Modal visible={showBookModal} animationType="slide">
@@ -521,8 +522,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a2a4a',
     borderRadius: 4,
   },
+  verseHighlightText: {
+    backgroundColor: '#e8f0ff',
+    borderRadius: 2,
+  },
+  verseHighlightTextDark: {
+    backgroundColor: '#1a2a4a',
+    borderRadius: 2,
+  },
   verseNumberDark: {
     color: '#6B8FE8',
+  },
+  verseNumberInline: {
+    color: '#304080',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  paragraph: {
+    padding: 16,
+  },
+  paragraphDark: {
+    backgroundColor: '#121212',
+  },
+  paragraphText: {
+    fontSize: 16,
+    lineHeight: 28,
+    textAlign: 'justify',
+  },
+  inlineVerse: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 8,
+    paddingVertical: 2,
+  },
+  paragraphBreak: {
+    height: 16,
   },
   lineBreak: {
     height: 8,
@@ -628,6 +662,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   versionButtonTextDark: {
+    color: '#ddd',
+  },
+  displayModeButton: {
+    width: 36,
+    backgroundColor: '#304080',
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  displayModeButtonDark: {
+    backgroundColor: '#1e1e1e',
+    borderWidth: 1,
+    borderColor: '#444',
+  },
+  displayModeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  displayModeButtonTextDark: {
     color: '#ddd',
   },
   modalContainer: {

@@ -98,11 +98,21 @@ pnpm run lint
 - Search functionality
 
 ### Pending
+- Paragraph/continuous reading mode (HelloAO.org API lacks paragraph break data)
 - Bookmarks/favorites
 - Download Bible versions for offline
 - Devotional section
 
 ## Development Notes
+
+### Paragraph Mode Research
+- HelloAO.org API does NOT provide `line_break` markers in chapter data
+- Tested translations: KJV, WEB, BSB - all return 0 paragraph breaks
+- Possible solutions:
+  1. Use a different Bible API with paragraph markers (e.g., API.Bible with special markup)
+  2. Bundle KJV with embedded paragraph JSON data
+  3. Calculate paragraph breaks algorithmically (e.g., every 3-5 verses)
+  4. Use translation-specific formatting rules
 
 ### Color Scheme
 - Primary: #304080 (blue)
