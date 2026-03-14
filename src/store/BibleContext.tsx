@@ -38,10 +38,30 @@ export function BibleProvider({ children }: { children: ReactNode }) {
 
   const refreshDownloadedVersions = async () => {
     const downloaded = await getDownloadedVersions();
-    setVersions(prev => prev.map(v => ({
-      ...v,
-      isDownloaded: downloaded.includes(v.id),
-    })));
+    
+    setVersions(prev => {
+      const existingIds = new Set(prev.map(v => v.id));
+      const newVersions: BibleVersion[] = [];
+      
+      for (const d of downloaded) {
+        if (!existingIds.has(d.id)) {
+          const cleanId = d.id.replace('eng_', '').replace('beblia_', '').replace('.xml', '');
+          const formattedName = cleanId.replace(/([A-Z])/g, ' $1').trim();
+          const displayName = d.name === 'Unknown' || !d.name ? formattedName : d.name;
+          newVersions.push({
+            id: d.id,
+            shortName: cleanId.substring(0, 10).toUpperCase(),
+            name: displayName,
+            isDownloaded: true,
+          });
+        }
+      }
+      
+      return [...prev.map(v => ({
+        ...v,
+        isDownloaded: downloaded.some(d => d.id === v.id),
+      })), ...newVersions];
+    });
   };
 
   const loadInitialState = async () => {

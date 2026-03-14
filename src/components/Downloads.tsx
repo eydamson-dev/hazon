@@ -37,7 +37,7 @@ export default function DownloadsScreen({ onClose }: DownloadsScreenProps) {
   const handleDownload = async (translation: AvailableTranslation) => {
     setDownloadingId(translation.id);
     try {
-      const success = await downloadBebliaTranslation(translation.id);
+      const success = await downloadBebliaTranslation(translation.id, translation.xmlFile, translation.name);
       if (success) {
         await refreshDownloadedVersions();
         Alert.alert('Success', `${translation.name} downloaded successfully!`);
@@ -51,25 +51,21 @@ export default function DownloadsScreen({ onClose }: DownloadsScreenProps) {
     }
   };
 
-  const handleDelete = (translation: AvailableTranslation) => {
-    Alert.alert(
-      'Delete Translation',
-      `Are you sure you want to delete ${translation.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await removeDownloadedVersion(translation.id);
-            await refreshDownloadedVersions();
-          },
-        },
-      ]
-    );
+  const handleDelete = async (translation: AvailableTranslation) => {
+    console.log('Deleting:', translation.id);
+    try {
+      await removeDownloadedVersion(translation.id);
+      await refreshDownloadedVersions();
+      console.log('Deleted successfully');
+    } catch (error) {
+      console.error('Delete error:', error);
+    }
   };
 
   const isDownloaded = (id: string) => versions.some(v => v.id === id && v.isDownloaded);
+
+  console.log('versions:', versions.map(v => ({ id: v.id, isDownloaded: v.isDownloaded })));
+  console.log('availableTranslations IDs:', availableTranslations.slice(0, 3).map(t => t.id));
 
   const downloadedTranslations = availableTranslations.filter(t => isDownloaded(t.id));
   const availableToDownload = availableTranslations.filter(t => !isDownloaded(t.id));

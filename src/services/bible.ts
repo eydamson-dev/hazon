@@ -173,26 +173,38 @@ export async function setSelectedTranslation(translationId: string): Promise<voi
   await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_TRANSLATION, translationId);
 }
 
-export async function getDownloadedVersions(): Promise<string[]> {
+interface DownloadedTranslation {
+  id: string;
+  name: string;
+}
+
+export async function getDownloadedVersions(): Promise<DownloadedTranslation[]> {
   try {
     const downloaded = await AsyncStorage.getItem(STORAGE_KEYS.DOWNLOADED_VERSIONS);
-    return downloaded ? JSON.parse(downloaded) : [];
+    const parsed = downloaded ? JSON.parse(downloaded) : [];
+    if (parsed.length > 0 && typeof parsed[0] === 'string') {
+      return parsed.map((id: string) => ({ id, name: id }));
+    }
+    return parsed;
   } catch {
     return [];
   }
 }
 
-export async function addDownloadedVersion(translationId: string): Promise<void> {
+export async function addDownloadedVersion(translationId: string, translationName?: string): Promise<void> {
   const downloaded = await getDownloadedVersions();
-  if (!downloaded.includes(translationId)) {
-    downloaded.push(translationId);
-    await AsyncStorage.setItem(STORAGE_KEYS.DOWNLOADED_VERSIONS, JSON.stringify(downloaded));
+  const existing = downloaded.find(d => d.id === translationId);
+  if (!existing) {
+    downloaded.push({ id: translationId, name: translationName || translationId });
+  } else if (translationName && existing.name !== translationName) {
+    existing.name = translationName;
   }
+  await AsyncStorage.setItem(STORAGE_KEYS.DOWNLOADED_VERSIONS, JSON.stringify(downloaded));
 }
 
 export async function removeDownloadedVersion(translationId: string): Promise<void> {
   const downloaded = await getDownloadedVersions();
-  const filtered = downloaded.filter(id => id !== translationId);
+  const filtered = downloaded.filter(d => d.id !== translationId);
   await AsyncStorage.setItem(STORAGE_KEYS.DOWNLOADED_VERSIONS, JSON.stringify(filtered));
   
   const keys = await AsyncStorage.getAllKeys();
@@ -324,14 +336,23 @@ function parseXmlBible(xmlText: string): XmlBible {
     testament.push({ name: testamentName, books });
   }
   
-  const transMatch = xmlText.match(/<bible translation="([^"]+)">/);
+  const transMatch = xmlText.match(/<bible translation="([^"]+)"/);
   const translation = transMatch ? transMatch[1] : 'Unknown';
   
   return { translation, testament };
 }
 
-export async function downloadBebliaTranslation(translationId: string): Promise<boolean> {
-  const version = BEBLIA_VERSIONS.find(v => v.id === translationId);
+export async function downloadBebliaTranslation(
+  translationId: string,
+  xmlFile?: string,
+  translationName?: string
+): Promise<boolean> {
+  let version = BEBLIA_VERSIONS.find(v => v.id === translationId);
+  
+  if (!version && xmlFile) {
+    version = { id: translationId, name: translationName || translationId, xmlFile };
+  }
+  
   if (!version) return false;
   
   try {
@@ -343,7 +364,7 @@ export async function downloadBebliaTranslation(translationId: string): Promise<
     
     await saveToIDB(translationId, parsed);
     
-    await addDownloadedVersion(translationId);
+    await addDownloadedVersion(translationId, parsed.translation || version.name);
     
     return true;
   } catch (error) {
