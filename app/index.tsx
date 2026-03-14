@@ -57,6 +57,7 @@ export default function BibleScreen() {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const chapterScrollRef = useRef<ScrollView>(null);
   const versePositionsRef = useRef<{ [key: number]: number }>({});
   const isInitialized = useRef(false);
 
@@ -239,6 +240,16 @@ export default function BibleScreen() {
     setLocalChapterNum(tab.chapterNum);
     setLocalCurrentVerse(tab.currentVerse);
     setSelectedVerses(tab.selectedVerses);
+    
+    const tabData: TabData[] = tabs.map(t => ({
+      id: t.id,
+      bookId: t.book.id,
+      bookName: t.book.commonName,
+      chapterNum: t.chapterNum,
+      currentVerse: t.currentVerse,
+    }));
+    saveTabs(tabData, tab.id);
+    
     loadChapter(tab.book.id, tab.chapterNum);
   };
 
@@ -261,6 +272,16 @@ export default function BibleScreen() {
     setLocalCurrentVerse(1);
     versePositionsRef.current = {};
     setSelectedVerses(new Set());
+  }, [localChapterNum, localCurrentBook?.id]);
+
+  useEffect(() => {
+    if (tabsInitialized.current && localChapterNum && chapterScrollRef.current) {
+      setTimeout(() => {
+        const chapterWidth = 60;
+        const scrollX = (localChapterNum - 3) * chapterWidth;
+        chapterScrollRef.current?.scrollTo({ x: Math.max(0, scrollX), animated: false });
+      }, 100);
+    }
   }, [localChapterNum, localCurrentBook?.id]);
 
   const applyHighlight = (color: string) => {
@@ -716,9 +737,40 @@ export default function BibleScreen() {
         </ScrollView>
       ) : null}
 
+      {localCurrentBook && (
+        <View style={styles.chapterScrollContainer}>
+          <ScrollView 
+            ref={chapterScrollRef}
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chapterScrollContent}
+          >
+            {Array.from({ length: localCurrentBook.numberOfChapters || 50 }, (_, i) => i + 1).map((chapter) => (
+              <TouchableOpacity
+                key={chapter}
+                style={[
+                  styles.chapterButton,
+                  localChapterNum === chapter && styles.chapterButtonActive,
+                ]}
+                onPress={() => handleChapterSelect(chapter)}
+              >
+                <Text
+                  style={[
+                    styles.chapterButtonText,
+                    localChapterNum === chapter && styles.chapterButtonTextActive,
+                  ]}
+                >
+                  {chapter}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={[styles.bottomButton, { flex: 2 }]}
+          style={[styles.bottomButton, { flex: 1 }]}
           onPress={() => setShowBookModal(true)}
         >
           <Text style={styles.bottomButtonText} numberOfLines={1}>
@@ -728,24 +780,6 @@ export default function BibleScreen() {
         
         <TouchableOpacity
           style={[styles.bottomButton, { flex: 1 }]}
-          onPress={() => setShowChapterModal(true)}
-        >
-          <Text style={styles.bottomButtonText}>
-            Ch. {localChapterNum}
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.bottomButton, { minWidth: 50 }]}
-          onPress={() => setShowVerseModal(true)}
-        >
-          <Text style={styles.bottomButtonText}>
-            v. {localCurrentVerse}
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.bottomButton, { minWidth: 70 }]}
           onPress={() => setShowVersionModal(true)}
         >
           <Text style={styles.bottomButtonText} numberOfLines={1}>
@@ -1196,5 +1230,37 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 20,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  chapterScrollContainer: {
+    backgroundColor: isDark ? '#1e1e1e' : '#f5f5f5',
+    borderTopWidth: 1,
+    borderTopColor: isDark ? '#333' : '#e0e0e0',
+    paddingVertical: 8,
+  },
+  chapterScrollContent: {
+    paddingHorizontal: 8,
+    gap: 8,
+  },
+  chapterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: isDark ? '#2a2a2a' : '#fff',
+    borderRadius: 8,
+    minWidth: 44,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: isDark ? '#444' : '#e0e0e0',
+  },
+  chapterButtonActive: {
+    backgroundColor: PRIMARY_COLOR,
+    borderColor: PRIMARY_COLOR,
+  },
+  chapterButtonText: {
+    fontSize: 14,
+    color: isDark ? '#ddd' : '#333',
+    fontWeight: '500',
+  },
+  chapterButtonTextActive: {
+    color: '#fff',
   },
 });
