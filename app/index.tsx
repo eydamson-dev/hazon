@@ -4,7 +4,9 @@ import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Ale
 import { YStack, XStack, Spinner } from 'tamagui';
 import { useBible } from '../src/store/BibleContext';
 import { useTheme } from '../src/store/ThemeContext';
+import { useDevotional } from '../src/store/DevotionalContext';
 import { getHighlights, saveHighlights, getTabs, saveTabs, type HighlightData, type TabData } from '../src/services/theme';
+import CreateDevotionModal from '../src/components/CreateDevotionModal';
 import { getBebliaChapter } from '../src/services/bible';
 import type { Book, Chapter } from '../src/types/bible';
 
@@ -47,10 +49,13 @@ export default function BibleScreen() {
     setCurrentChapterNum,
   } = useBible();
 
+  const { createDevotion } = useDevotional();
+
   const [showBookModal, setShowBookModal] = useState(false);
   const [showChapterModal, setShowChapterModal] = useState(false);
   const [showVerseModal, setShowVerseModal] = useState(false);
   const [showVersionModal, setShowVersionModal] = useState(false);
+  const [showCreateDevotionModal, setShowCreateDevotionModal] = useState(false);
   const [isAddingNewTab, setIsAddingNewTab] = useState(false);
   const [localCurrentBook, setLocalCurrentBook] = useState<Book | null>(null);
   const [localChapterNum, setLocalChapterNum] = useState(1);
@@ -763,6 +768,9 @@ export default function BibleScreen() {
               <TouchableOpacity style={styles.toolbarButton} onPress={handleCompare}>
                 <Text style={styles.toolbarButtonText}>Compare</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowCreateDevotionModal(true)}>
+                <Text style={styles.toolbarButtonText}>Devotion</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.toolbarButton} onPress={clearSelection}>
                 <Text style={[styles.toolbarButtonText, { color: '#ff4444' }]}>Cancel</Text>
               </TouchableOpacity>
@@ -1019,6 +1027,19 @@ export default function BibleScreen() {
             </ScrollView>
           )}
         </View>
+      </Modal>
+
+      <Modal visible={showCreateDevotionModal} animationType="slide">
+        <CreateDevotionModal
+          selectedVerses={selectedVerses}
+          currentBook={localCurrentBook}
+          currentChapterNum={localChapterNum}
+          currentChapter={currentChapter}
+          onClose={() => {
+            setShowCreateDevotionModal(false);
+            clearSelection();
+          }}
+        />
       </Modal>
     </View>
   );

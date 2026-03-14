@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import tamaguiConfig from "../tamagui.config";
 import { ThemeProvider, useTheme as useAppTheme } from "../src/store/ThemeContext";
 import { BibleProvider } from "../src/store/BibleContext";
+import { DevotionalProvider } from "../src/store/DevotionalContext";
 
 function TabLayout() {
   const { isDark } = useAppTheme();
@@ -72,7 +73,9 @@ function ThemedApp() {
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={isDark ? "dark" : "light"}>
       <BibleProvider>
-        <TabLayout />
+        <DevotionalProvider>
+          <TabLayout />
+        </DevotionalProvider>
       </BibleProvider>
     </TamaguiProvider>
   );
