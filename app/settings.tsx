@@ -1,18 +1,16 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { YStack, XStack, Button, Card } from "tamagui";
+import { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from "react-native";
+import { useRouter } from 'expo-router';
 import { useTheme } from "../src/store/ThemeContext";
 import { ThemeMode } from "../src/services/theme";
+import DownloadsScreen from "../src/components/Downloads";
 
 const PRIMARY_COLOR = '#304080';
 
 export default function Settings() {
+  const router = useRouter();
   const { theme, isDark, setTheme } = useTheme();
-
-  const themeOptions: { label: string; value: ThemeMode; description: string }[] = [
-    { label: 'Light', value: 'light', description: 'Always use light mode' },
-    { label: 'Dark', value: 'dark', description: 'Always use dark mode' },
-    { label: 'System', value: 'system', description: 'Follow system settings' },
-  ];
+  const [showDownloads, setShowDownloads] = useState(false);
 
   const styles = createStyles(isDark);
 
@@ -20,11 +18,15 @@ export default function Settings() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Settings</Text>
 
-      <YStack padding="$4" space="$3">
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Appearance</Text>
         
         <Text style={styles.label}>Theme</Text>
-        {themeOptions.map((option) => (
+        {[
+          { label: 'Light', value: 'light' as ThemeMode, description: 'Always use light mode' },
+          { label: 'Dark', value: 'dark' as ThemeMode, description: 'Always use dark mode' },
+          { label: 'System', value: 'system' as ThemeMode, description: 'Follow system settings' },
+        ].map((option) => (
           <TouchableOpacity
             key={option.value}
             style={[
@@ -51,19 +53,40 @@ export default function Settings() {
             )}
           </TouchableOpacity>
         ))}
-      </YStack>
+      </View>
 
-      <YStack padding="$4" space="$3">
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Bible</Text>
+        
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => setShowDownloads(true)}
+        >
+          <View>
+            <Text style={styles.menuItemText}>Bible Downloads</Text>
+            <Text style={styles.menuItemDesc}>
+              Download and manage Bible translations
+            </Text>
+          </View>
+          <Text style={styles.menuItemArrow}>›</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>About</Text>
         <View style={styles.aboutCard}>
           <Text style={styles.aboutText}>
             CJCRSG Bible App{'\n'}
-            Version 1.0.0{'\n\n'}
+            Version 1.1.0{'\n\n'}
             A Bible reading app with multiple translations,{'\n'}
             devotional content, and study features.
           </Text>
         </View>
-      </YStack>
+      </View>
+
+      <Modal visible={showDownloads} animationType="slide">
+        <DownloadsScreen onClose={() => setShowDownloads(false)} />
+      </Modal>
     </ScrollView>
   );
 }
@@ -79,6 +102,9 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     color: PRIMARY_COLOR,
     padding: 20,
     paddingBottom: 10,
+  },
+  section: {
+    padding: 16,
   },
   sectionTitle: {
     fontSize: 14,
@@ -125,6 +151,30 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 18,
     color: PRIMARY_COLOR,
     fontWeight: 'bold',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: isDark ? '#1e1e1e' : '#fff',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: isDark ? '#333' : '#e0e0e0',
+  },
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: isDark ? '#eee' : '#333',
+  },
+  menuItemDesc: {
+    fontSize: 12,
+    color: isDark ? '#888' : '#666',
+    marginTop: 2,
+  },
+  menuItemArrow: {
+    fontSize: 24,
+    color: isDark ? '#666' : '#ccc',
   },
   aboutCard: {
     backgroundColor: isDark ? '#1e1e1e' : '#fff',

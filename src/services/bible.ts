@@ -100,6 +100,42 @@ export async function saveReadingState(state: ReadingState): Promise<void> {
   }
 }
 
+export interface AvailableTranslation {
+  id: string;
+  name: string;
+  xmlFile: string;
+  size: number;
+}
+
+const GITHUB_API_URL = 'https://api.github.com/repos/Beblia/Holy-Bible-XML-Format/contents';
+
+export async function fetchAvailableTranslations(): Promise<AvailableTranslation[]> {
+  try {
+    const response = await fetch(GITHUB_API_URL);
+    if (!response.ok) throw new Error('Failed to fetch');
+    
+    const files: Array<{ name: string; size: number }> = await response.json();
+    
+    const translations: AvailableTranslation[] = files
+      .filter(f => f.name.endsWith('.xml'))
+      .map(f => {
+        const name = f.name.replace('.xml', '').replace(/([A-Z])/g, ' $1').trim();
+        return {
+          id: `beblia_${f.name.toLowerCase().replace('.xml', '')}`,
+          name,
+          xmlFile: f.name,
+          size: f.size,
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+    
+    return translations;
+  } catch (error) {
+    console.error('Error fetching available translations:', error);
+    return [];
+  }
+}
+
 export const BEBLIA_VERSIONS: { id: string; name: string; xmlFile: string }[] = [
   { id: 'eng_niv', name: 'New International Version (NIV)', xmlFile: 'EnglishNIVBible.xml' },
   { id: 'eng_kjv', name: 'King James Version (KJV)', xmlFile: 'EnglishKJVBible.xml' },

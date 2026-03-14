@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'expo-router';
 import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Alert, Clipboard } from 'react-native';
 import { YStack, XStack, Spinner } from 'tamagui';
 import { useBible } from '../src/store/BibleContext';
@@ -29,6 +30,7 @@ const HIGHLIGHT_COLORS = [
 ];
 
 export default function BibleScreen() {
+  const router = useRouter();
   const { isDark } = useTheme();
   const {
     selectedVersion,
@@ -912,29 +914,49 @@ export default function BibleScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.modalContent}>
-            {versions.map((version) => (
-              <TouchableOpacity
-                key={version.id}
-                style={[
-                  styles.versionItem,
-                  selectedVersion.id === version.id && styles.versionItemSelected,
-                ]}
-                onPress={() => handleVersionSelect(version.id)}
-              >
-                <Text
-                  style={[
-                    styles.versionItemText,
-                    selectedVersion.id === version.id && styles.versionItemTextSelected,
-                  ]}
-                >
-                  {version.name}
+            {versions.filter(v => v.isDownloaded).length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No translations downloaded yet</Text>
+                <Text style={styles.emptyStateSubtext}>
+                  Go to Settings to download translations
                 </Text>
-                {version.isDownloaded && (
-                  <Text style={styles.downloadedBadge}>✓ Downloaded</Text>
-                )}
-              </TouchableOpacity>
-            ))}
+              </View>
+            ) : (
+              versions
+                .filter(v => v.isDownloaded)
+                .map((version) => (
+                  <TouchableOpacity
+                    key={version.id}
+                    style={[
+                      styles.versionItem,
+                      selectedVersion.id === version.id && styles.versionItemSelected,
+                    ]}
+                    onPress={() => handleVersionSelect(version.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.versionItemText,
+                        selectedVersion.id === version.id && styles.versionItemTextSelected,
+                      ]}
+                    >
+                      {version.name}
+                    </Text>
+                    {version.isDownloaded && (
+                      <Text style={styles.downloadedBadge}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))
+            )}
           </ScrollView>
+          <TouchableOpacity
+            style={styles.downloadMoreButton}
+            onPress={() => {
+              setShowVersionModal(false);
+              router.push('/settings');
+            }}
+          >
+            <Text style={styles.downloadMoreButtonText}>Download More Translations</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
 
@@ -1361,5 +1383,32 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
   compareError: {
     color: '#ff4444',
     fontSize: 14,
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: isDark ? '#eee' : '#333',
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: isDark ? '#888' : '#666',
+    textAlign: 'center',
+  },
+  downloadMoreButton: {
+    backgroundColor: PRIMARY_COLOR,
+    padding: 16,
+    margin: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  downloadMoreButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
