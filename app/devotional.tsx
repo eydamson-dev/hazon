@@ -38,49 +38,32 @@ export default function Devotional() {
     return devotions.filter(d => d.createdAt.split('T')[0] === dateStr);
   };
 
-  const handleDelete = (devotion: Devotion) => {
-    Alert.alert(
-      'Delete Devotion',
-      'Move this devotion to trash?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteDevotion(devotion.id) },
-      ]
-    );
+  const handleDelete = async (devotion: Devotion) => {
+    const success = await deleteDevotion(devotion.id);
+    if (!success) {
+      Alert.alert('Error', 'Failed to delete devotion');
+    }
   };
 
-  const handleRestore = (devotion: Devotion) => {
-    Alert.alert(
-      'Restore Devotion',
-      'Restore this devotion from trash?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Restore', onPress: () => restoreDevotion(devotion.id) },
-      ]
-    );
+  const handleRestore = async (devotion: Devotion) => {
+    const success = await restoreDevotion(devotion.id);
+    if (!success) {
+      Alert.alert('Error', 'Failed to restore devotion');
+    }
   };
 
-  const handlePermanentDelete = (devotion: Devotion) => {
-    Alert.alert(
-      'Delete Permanently',
-      'This cannot be undone. Are you sure?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete Forever', style: 'destructive', onPress: () => permanentlyDeleteDevotion(devotion.id) },
-      ]
-    );
+  const handlePermanentDelete = async (devotion: Devotion) => {
+    const success = await permanentlyDeleteDevotion(devotion.id);
+    if (!success) {
+      Alert.alert('Error', 'Failed to delete devotion');
+    }
   };
 
-  const handleEmptyTrash = () => {
-    if (trash.length === 0) return;
-    Alert.alert(
-      'Empty Trash',
-      'Delete all items in trash permanently?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Empty Trash', style: 'destructive', onPress: () => emptyTrash() },
-      ]
-    );
+  const handleEmptyTrash = async () => {
+    const success = await emptyTrash();
+    if (!success) {
+      Alert.alert('Error', 'Failed to empty trash');
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -91,6 +74,8 @@ export default function Devotional() {
     const success = await updateDevotion(selectedDevotion.id, editTitle.trim(), editContent.trim(), selectedDevotion.verseRefs);
     if (success) {
       setSelectedDevotion(null);
+    } else {
+      Alert.alert('Error', 'Failed to save changes');
     }
   };
 
@@ -156,28 +141,30 @@ export default function Devotional() {
   };
 
   const renderDevotionCard = (devotion: Devotion, isTrash: boolean = false) => (
-    <TouchableOpacity
-      key={devotion.id}
-      style={styles.devotionCard}
-      onPress={() => {
-        if (isTrash) return;
-        setSelectedDevotion(devotion);
-        setEditTitle(devotion.title);
-        setEditContent(devotion.content);
-      }}
-    >
-      <View style={styles.devotionCardHeader}>
-        <Text style={styles.devotionTitle} numberOfLines={1}>{devotion.title}</Text>
-        <Text style={styles.devotionDate}>
-          {new Date(devotion.createdAt).toLocaleDateString()}
-        </Text>
-      </View>
-      <Text style={styles.devotionContent} numberOfLines={2}>{devotion.content}</Text>
-      {devotion.verseRefs.length > 0 && (
-        <Text style={styles.devotionVerseRefs}>
-          {devotion.verseRefs.map(v => `${v.bookName} ${v.chapter}:${v.verses.join(',')}`).join(' | ')}
-        </Text>
-      )}
+    <View key={devotion.id} style={styles.devotionCard}>
+      <TouchableOpacity
+        style={styles.devotionCardContent}
+        onPress={() => {
+          if (isTrash) return;
+          setSelectedDevotion(devotion);
+          setEditTitle(devotion.title);
+          setEditContent(devotion.content);
+        }}
+        disabled={isTrash}
+      >
+        <View style={styles.devotionCardHeader}>
+          <Text style={styles.devotionTitle} numberOfLines={1}>{devotion.title}</Text>
+          <Text style={styles.devotionDate}>
+            {new Date(devotion.createdAt).toLocaleDateString()}
+          </Text>
+        </View>
+        <Text style={styles.devotionContent} numberOfLines={2}>{devotion.content}</Text>
+        {devotion.verseRefs.length > 0 && (
+          <Text style={styles.devotionVerseRefs}>
+            {devotion.verseRefs.map(v => `${v.bookName} ${v.chapter}:${v.verses.join(',')}`).join(' | ')}
+          </Text>
+        )}
+      </TouchableOpacity>
       <View style={styles.devotionActions}>
         {isTrash ? (
           <>
@@ -194,7 +181,7 @@ export default function Devotional() {
           </TouchableOpacity>
         )}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   const renderCreateModal = () => (
@@ -442,6 +429,9 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     padding: 16,
     backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
     borderRadius: 12,
+  },
+  devotionCardContent: {
+    marginBottom: 8,
   },
   devotionCardHeader: {
     flexDirection: 'row',

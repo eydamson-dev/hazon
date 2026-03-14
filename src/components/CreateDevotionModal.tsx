@@ -68,9 +68,7 @@ export default function CreateDevotionModal({
     try {
       const success = await createDevotion(title.trim(), content.trim(), verseRefs);
       if (success) {
-        Alert.alert('Success', 'Devotion saved!', [
-          { text: 'OK', onPress: onClose }
-        ]);
+        onClose();
       } else {
         Alert.alert('Error', 'Failed to save devotion');
       }

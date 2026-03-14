@@ -53,6 +53,8 @@ All notable changes to this project will be documented in this file.
 - Translation selector now shows only downloaded translations
 - Ensure deleted translations are properly removed from list
 - Translation name formatting (NIV, ESV now display correctly instead of N I V)
+- Devotional save button not working (fixed)
+- Devotional delete button not working (fixed)
 
 ### In Progress
 - Search functionality
