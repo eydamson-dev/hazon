@@ -1,5 +1,11 @@
 # AGENTS.md - CJCRSG Bible App
 
+## Important Reminders
+- **Always update CHANGELOG.md** when committing changes to track progress
+- Use pnpm for package management
+- Run typecheck before committing
+- Don't commit until user asks
+
 ## Project Setup
 
 ### Package Manager
