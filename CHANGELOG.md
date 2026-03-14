@@ -44,11 +44,16 @@ All notable changes to this project will be documented in this file.
 - View devotions in list, calendar, or trash tabs
 - Calendar view shows dots on days with devotions
 - Add/remove verses to existing devotions
+- Add verses to existing devotion or create new from Bible selection
+- Add verses to existing devotion or create new from Bible selection
+- Verse selection toolbar with Copy, Share, Compare, Devotion, Cancel buttons
+- Verse range floating above toolbar
 
 ### Changed
 - Replaced HelloAO.org API with Beblia GitHub XML repository
 - Removed hardcoded translations - users now download any translation they want
 - Book IDs now use xml_* format for Beblia translations
+- Verse range moved above context menu for better visibility
 
 ### Fixed
 - Translation selector now shows only downloaded translations

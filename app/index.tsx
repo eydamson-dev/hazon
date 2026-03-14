@@ -93,9 +93,9 @@ export default function BibleScreen() {
   useEffect(() => {
     const loadTabs = async () => {
       if (books.length === 0) return;
-      
+
       const { tabs: savedTabs, activeTabId: savedActiveTabId } = await getTabs();
-      
+
       if (savedTabs.length > 0) {
         const restoredTabs: Tab[] = savedTabs.map(tabData => {
           const book = books.find(b => b.id === tabData.bookId);
@@ -109,7 +109,7 @@ export default function BibleScreen() {
         });
         setTabs(restoredTabs);
         setActiveTabId(savedActiveTabId);
-        
+
         const activeTab = restoredTabs.find(t => t.id === savedActiveTabId) || restoredTabs[0];
         setLocalCurrentBook(activeTab.book);
         setLocalChapterNum(activeTab.chapterNum);
@@ -137,7 +137,7 @@ export default function BibleScreen() {
         saveTabs(tabData, defaultTab.id);
       }
     };
-    
+
     if (currentBook && isInitialized.current) {
       loadTabs();
     }
@@ -159,7 +159,7 @@ export default function BibleScreen() {
       } else {
         newMap.delete(getHighlightKey());
       }
-      
+
       if (isInitialized.current) {
         const data: HighlightData = {};
         for (const [key, verseMap] of newMap) {
@@ -167,7 +167,7 @@ export default function BibleScreen() {
         }
         saveHighlights(data);
       }
-      
+
       return newMap;
     });
   };
@@ -178,7 +178,7 @@ export default function BibleScreen() {
   const openInNewTab = (book: Book, chapterNum: number) => {
     const tabId = `${book.id}-${chapterNum}`;
     const existingTab = tabs.find(t => t.id === tabId);
-    
+
     if (existingTab) {
       setActiveTabId(tabId);
     } else {
@@ -223,7 +223,7 @@ export default function BibleScreen() {
       saveTabs(tabData, newActiveId);
       return newTabs;
     });
-    
+
     if (activeTabId === tabId) {
       if (tabs.length > 1) {
         const newIndex = tabIndex > 0 ? tabIndex - 1 : 0;
@@ -252,7 +252,7 @@ export default function BibleScreen() {
     setLocalChapterNum(tab.chapterNum);
     setLocalCurrentVerse(tab.currentVerse);
     setSelectedVerses(tab.selectedVerses);
-    
+
     const tabData: TabData[] = tabs.map(t => ({
       id: t.id,
       bookId: t.book.id,
@@ -261,7 +261,7 @@ export default function BibleScreen() {
       currentVerse: t.currentVerse,
     }));
     saveTabs(tabData, tab.id);
-    
+
     loadChapter(tab.book.id, tab.chapterNum);
   };
 
@@ -277,7 +277,7 @@ export default function BibleScreen() {
 
   useEffect(() => {
     if (!tabsInitialized.current) return;
-    
+
     if (localCurrentBook) {
       setHighlightedVerses(getCurrentHighlights());
     }
@@ -333,11 +333,11 @@ export default function BibleScreen() {
     if (selectedVerses.size === 0) return '';
     const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
     if (sorted.length === 1) return `v${sorted[0]}`;
-    
+
     let range = '';
     let start = sorted[0];
     let prev = sorted[0];
-    
+
     for (let i = 1; i <= sorted.length; i++) {
       const curr = sorted[i];
       if (curr !== prev + 1 || i === sorted.length) {
@@ -352,10 +352,10 @@ export default function BibleScreen() {
 
   const getSelectedVersesText = (): string => {
     if (!currentChapter || selectedVerses.size === 0) return '';
-    
+
     const sortedVerses = Array.from(selectedVerses).sort((a, b) => a - b);
     const verses: string[] = [];
-    
+
     for (const verseNum of sortedVerses) {
       const verseItem = currentChapter.chapter.content.find(
         (item) => item.type === 'verse' && item.number === verseNum
@@ -364,7 +364,7 @@ export default function BibleScreen() {
         verses.push(`${verseNum}. ${renderVerseContent(verseItem.content || [])}`);
       }
     }
-    
+
     const bookName = localCurrentBook?.commonName || '';
     return `${bookName} ${localChapterNum}:${sortedVerses.join(',')}\n\n${verses.join('\n\n')}`;
   };
@@ -395,10 +395,10 @@ export default function BibleScreen() {
   const handleCompare = async () => {
     setIsLoadingCompare(true);
     setShowCompareModal(true);
-    
+
     const sortedVerses = Array.from(selectedVerses).sort((a, b) => a - b);
     const results: { version: typeof versions[0]; chapter: Chapter | null }[] = [];
-    
+
     for (const version of versions) {
       if (!version.isDownloaded) continue;
       try {
@@ -409,7 +409,7 @@ export default function BibleScreen() {
         results.push({ version, chapter: null });
       }
     }
-    
+
     setCompareChapters(results);
     setIsLoadingCompare(false);
   };
@@ -435,10 +435,10 @@ export default function BibleScreen() {
       setCurrentBook(book);
       setCurrentChapterNum(1);
       setSelectedVerses(new Set<number>());
-      
+
       setTabs(prev => {
-        const newTabs = prev.map(t => 
-          t.id === activeTabId 
+        const newTabs = prev.map(t =>
+          t.id === activeTabId
             ? { ...t, book, chapterNum: 1, currentVerse: 1, selectedVerses: new Set<number>() }
             : t
         );
@@ -452,7 +452,7 @@ export default function BibleScreen() {
         saveTabs(tabData, activeTabId);
         return newTabs;
       });
-      
+
       loadChapter(book.id, 1);
     }
     setShowBookModal(false);
@@ -463,10 +463,10 @@ export default function BibleScreen() {
     setLocalChapterNum(chapter);
     setCurrentChapterNum(chapter);
     setSelectedVerses(new Set<number>());
-    
+
     setTabs(prev => {
-      const newTabs = prev.map(t => 
-        t.id === activeTabId 
+      const newTabs = prev.map(t =>
+        t.id === activeTabId
           ? { ...t, chapterNum: chapter, selectedVerses: new Set<number>() }
           : t
       );
@@ -695,7 +695,7 @@ export default function BibleScreen() {
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : currentChapter ? (
-        <ScrollView 
+        <ScrollView
           style={styles.chapterContent}
           ref={scrollViewRef}
           onContentSizeChange={() => {
@@ -717,10 +717,10 @@ export default function BibleScreen() {
               const verseNum = item.number || 0;
               const isSelected = selectedVerses.has(verseNum);
               const highlightColor = highlightedVerses.get(verseNum);
-              
+
               return (
                 <View key={index}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[
                       styles.verse,
                       localCurrentVerse === verseNum && styles.verseHighlight,
@@ -757,25 +757,28 @@ export default function BibleScreen() {
 
       {selectedVerses.size > 0 && (
         <>
-          <View style={[styles.selectionToolbar, isDark && styles.selectionToolbarDark]}>
-            <Text style={styles.selectionText}>{selectedVerses.size} selected</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarScrollContent}>
-              <TouchableOpacity style={styles.toolbarIconButton} onPress={handleCopy}>
-                <Ionicons name="copy-outline" size={20} color={isDark ? '#fff' : '#000'} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.toolbarIconButton} onPress={handleShare}>
-                <Ionicons name="share-outline" size={20} color={isDark ? '#fff' : '#000'} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.toolbarIconButton} onPress={handleCompare}>
-                <Ionicons name="git-compare-outline" size={20} color={isDark ? '#fff' : '#000'} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowCreateDevotionModal(true)}>
-                <Text style={styles.toolbarButtonText}>Devotion</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.toolbarIconButton} onPress={clearSelection}>
-                <Ionicons name="close-circle-outline" size={20} color="#ff4444" />
-              </TouchableOpacity>
+          {/* Verse range above the context menu */}
+          <View style={[styles.verseRangeAbove, isDark && styles.verseRangeAboveDark]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.verseRangeScroll}>
+              <Text style={styles.verseRangeText}>{getVerseRangeString()}</Text>
             </ScrollView>
+          </View>
+          <View style={[styles.selectionToolbar, isDark && styles.selectionToolbarDark]}>
+            <TouchableOpacity style={styles.toolbarButton} onPress={handleCopy}>
+              <Text style={styles.toolbarButtonText}>Copy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.toolbarButton} onPress={handleShare}>
+              <Text style={styles.toolbarButtonText}>Share</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.toolbarButton} onPress={handleCompare}>
+              <Text style={styles.toolbarButtonText}>Compare</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowCreateDevotionModal(true)}>
+              <Text style={styles.toolbarButtonText}>Devotion</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.toolbarIconButton} onPress={clearSelection}>
+              <Ionicons name="close-circle-outline" size={20} color="#ff4444" />
+            </TouchableOpacity>
           </View>
           <View style={[styles.colorPickerBar, isDark && styles.colorPickerBarDark]}>
             <XStack gap="$2" justifyContent="center">
@@ -799,9 +802,9 @@ export default function BibleScreen() {
 
       {localCurrentBook && (
         <View style={styles.chapterScrollContainer}>
-          <ScrollView 
+          <ScrollView
             ref={chapterScrollRef}
-            horizontal 
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.chapterScrollContent}
           >
@@ -837,7 +840,7 @@ export default function BibleScreen() {
             {localCurrentBook?.commonName || 'Book'}
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.bottomButton, { flex: 1 }]}
           onPress={() => setShowVersionModal(true)}
@@ -1243,8 +1246,9 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
   },
   selectionToolbar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: 8,
     padding: 12,
     backgroundColor: '#f0f4ff',
     borderBottomWidth: 1,
@@ -1258,23 +1262,61 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
     color: PRIMARY_COLOR,
   },
+  verseRangeContainer: {
+    flex: 1,
+    marginRight: 8,
+    minWidth: 80,
+    maxWidth: 150,
+    overflow: 'hidden',
+  },
+  verseRangeAbove: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    marginBottom: 4,
+  },
+  verseRangeAboveDark: {
+    backgroundColor: 'rgba(30, 30, 30, 0.95)',
+  },
+  verseRangeScroll: {
+    flex: 1,
+  },
+  verseRangeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: PRIMARY_COLOR,
+  },
   toolbarScrollContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 4,
+    justifyContent: 'center',
   },
   toolbarIconButton: {
-    width: 40,
-    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'center',
-    alignItems: 'center',
+    minWidth: 40,
   },
   toolbarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     backgroundColor: PRIMARY_COLOR,
     borderRadius: 4,
   },

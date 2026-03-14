@@ -114,7 +114,8 @@ pnpm run lint
 
 ### Pending
 - Bookmarks/favorites
-- Devotional section
+- Push notifications for daily devotional
+- More devotional features (categories, sharing)
 
 ## Development Notes
 
