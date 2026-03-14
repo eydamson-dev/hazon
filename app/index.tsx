@@ -7,8 +7,10 @@ import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
 import { getHighlights, saveHighlights, getTabs, saveTabs, type HighlightData, type TabData } from '../src/services/theme';
 import CreateDevotionModal from '../src/components/CreateDevotionModal';
+import DevotionPickerModal from '../src/components/DevotionPickerModal';
 import { getBebliaChapter } from '../src/services/bible';
 import type { Book, Chapter } from '../src/types/bible';
+import type { VerseRef } from '../src/types/devotional';
 
 const PRIMARY_COLOR = '#304080';
 
@@ -49,13 +51,14 @@ export default function BibleScreen() {
     setCurrentChapterNum,
   } = useBible();
 
-  const { createDevotion } = useDevotional();
+  const { createDevotion, devotions, updateDevotion } = useDevotional();
 
   const [showBookModal, setShowBookModal] = useState(false);
   const [showChapterModal, setShowChapterModal] = useState(false);
   const [showVerseModal, setShowVerseModal] = useState(false);
   const [showVersionModal, setShowVersionModal] = useState(false);
   const [showCreateDevotionModal, setShowCreateDevotionModal] = useState(false);
+  const [showDevotionPickerModal, setShowDevotionPickerModal] = useState(false);
   const [isAddingNewTab, setIsAddingNewTab] = useState(false);
   const [localCurrentBook, setLocalCurrentBook] = useState<Book | null>(null);
   const [localChapterNum, setLocalChapterNum] = useState(1);
@@ -768,7 +771,7 @@ export default function BibleScreen() {
               <TouchableOpacity style={styles.toolbarButton} onPress={handleCompare}>
                 <Text style={styles.toolbarButtonText}>Compare</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowCreateDevotionModal(true)}>
+              <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowDevotionPickerModal(true)}>
                 <Text style={styles.toolbarButtonText}>Devotion</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.toolbarButton} onPress={clearSelection}>
@@ -1038,6 +1041,64 @@ export default function BibleScreen() {
           onClose={() => {
             setShowCreateDevotionModal(false);
             clearSelection();
+          }}
+        />
+      </Modal>
+
+      <Modal visible={showDevotionPickerModal} animationType="slide">
+        <DevotionPickerModal
+          selectedVerses={selectedVerses}
+          currentBook={localCurrentBook}
+          currentChapterNum={localChapterNum}
+          currentChapter={currentChapter}
+          onClose={() => setShowDevotionPickerModal(false)}
+          onCreateNew={() => {
+            setShowDevotionPickerModal(false);
+            setShowCreateDevotionModal(true);
+          }}
+          onAddToExisting={async (devotionId) => {
+            const existing = devotions.find(d => d.id === devotionId);
+            if (!existing) return;
+            
+            const verseRefs: VerseRef[] = [];
+            if (localCurrentBook && currentChapter && selectedVerses.size > 0) {
+              const sortedVerses = Array.from(selectedVerses).sort((a, b) => a - b);
+              const verseContents: string[] = [];
+              
+              for (const verseNum of sortedVerses) {
+                const verse = currentChapter.chapter.content.find(
+                  (c: any) => c.type === 'verse' && c.number === verseNum
+                );
+                if (verse) {
+                  const text = verse.content?.map((c: any) => typeof c === 'string' ? c : c.text).join(' ');
+                  verseContents.push(text || '');
+                }
+              }
+
+              verseRefs.push({
+                bookId: localCurrentBook.id,
+                bookName: localCurrentBook.commonName,
+                chapter: localChapterNum,
+                verses: sortedVerses,
+                text: verseContents.join(' '),
+              });
+            }
+            
+            const newVerseRefs = [...existing.verseRefs, ...verseRefs];
+            const success = await updateDevotion(
+              devotionId,
+              existing.title,
+              existing.content,
+              newVerseRefs
+            );
+            
+            if (success) {
+              Alert.alert('Success', 'Verses added to devotion!');
+              setShowDevotionPickerModal(false);
+              clearSelection();
+            } else {
+              Alert.alert('Error', 'Failed to add verses');
+            }
           }}
         />
       </Modal>

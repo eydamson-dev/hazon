@@ -44,6 +44,7 @@ All notable changes to this project will be documented in this file.
 - View devotions in list, calendar, or trash tabs
 - Calendar view shows dots on days with devotions
 - Add/remove verses to existing devotions
+- Add verses to existing devotion or create new from Bible selection
 
 ### Changed
 - Replaced HelloAO.org API with Beblia GitHub XML repository
