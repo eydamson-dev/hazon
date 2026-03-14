@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Alert, Clipboard } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { YStack, XStack, Spinner } from 'tamagui';
 import { useBible } from '../src/store/BibleContext';
 import { useTheme } from '../src/store/ThemeContext';
@@ -760,24 +761,24 @@ export default function BibleScreen() {
       {selectedVerses.size > 0 && (
         <>
           <View style={[styles.selectionToolbar, isDark && styles.selectionToolbarDark]}>
-            <Text style={styles.selectionText}>{getVerseRangeString()}</Text>
-            <XStack gap="$2">
-              <TouchableOpacity style={styles.toolbarButton} onPress={handleCopy}>
-                <Text style={styles.toolbarButtonText}>Copy</Text>
+            <Text style={styles.selectionText}>{selectedVerses.size} selected</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarScrollContent}>
+              <TouchableOpacity style={styles.toolbarIconButton} onPress={handleCopy}>
+                <Ionicons name="copy-outline" size={20} color={isDark ? '#fff' : '#000'} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.toolbarButton} onPress={handleShare}>
-                <Text style={styles.toolbarButtonText}>Share</Text>
+              <TouchableOpacity style={styles.toolbarIconButton} onPress={handleShare}>
+                <Ionicons name="share-outline" size={20} color={isDark ? '#fff' : '#000'} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.toolbarButton} onPress={handleCompare}>
-                <Text style={styles.toolbarButtonText}>Compare</Text>
+              <TouchableOpacity style={styles.toolbarIconButton} onPress={handleCompare}>
+                <Ionicons name="git-compare-outline" size={20} color={isDark ? '#fff' : '#000'} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowDevotionPickerModal(true)}>
-                <Text style={styles.toolbarButtonText}>Devotion</Text>
+              <TouchableOpacity style={styles.toolbarIconButton} onPress={() => setShowDevotionPickerModal(true)}>
+                <Ionicons name="heart-outline" size={20} color={isDark ? '#fff' : '#000'} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.toolbarButton} onPress={clearSelection}>
-                <Text style={[styles.toolbarButtonText, { color: '#ff4444' }]}>Cancel</Text>
+              <TouchableOpacity style={styles.toolbarIconButton} onPress={clearSelection}>
+                <Ionicons name="close-circle-outline" size={20} color="#ff4444" />
               </TouchableOpacity>
-            </XStack>
+            </ScrollView>
           </View>
           <View style={[styles.colorPickerBar, isDark && styles.colorPickerBarDark]}>
             <XStack gap="$2" justifyContent="center">
@@ -1317,6 +1318,20 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: PRIMARY_COLOR,
+  },
+  toolbarScrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 4,
+  },
+  toolbarIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   toolbarButton: {
     paddingVertical: 6,
