@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Replaced bottom nav chapter/verse buttons with horizontal chapter scroll
 - Tab bar with scrollable tabs for multiple Bible chapters
+- Move highlight context menu to bottom above chapter selector
 
 ### Fixed
 - Verse navigation auto-scroll

@@ -662,8 +662,6 @@ export default function BibleScreen() {
               const verseNum = item.number || 0;
               const isSelected = selectedVerses.has(verseNum);
               const highlightColor = highlightedVerses.get(verseNum);
-              const lastSelectedVerse = selectedVerses.size > 0 ? Math.max(...selectedVerses) : 0;
-              const showToolbarHere = selectedVerses.size > 0 && lastSelectedVerse === verseNum;
               
               return (
                 <View key={index}>
@@ -691,41 +689,6 @@ export default function BibleScreen() {
                       {renderVerseContent(item.content || [])}
                     </Text>
                   </TouchableOpacity>
-                  {showToolbarHere && (
-                    <View>
-                      <View style={[styles.selectionToolbar, isDark && styles.selectionToolbarDark]}>
-                        <Text style={styles.selectionText}>{getVerseRangeString()}</Text>
-                        <XStack gap="$2">
-                          <TouchableOpacity style={styles.toolbarButton} onPress={handleCopy}>
-                            <Text style={styles.toolbarButtonText}>Copy</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.toolbarButton} onPress={handleShare}>
-                            <Text style={styles.toolbarButtonText}>Share</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.toolbarButton} onPress={clearSelection}>
-                            <Text style={[styles.toolbarButtonText, { color: '#ff4444' }]}>Cancel</Text>
-                          </TouchableOpacity>
-                        </XStack>
-                      </View>
-                      <View style={[styles.colorPickerBar, isDark && styles.colorPickerBarDark]}>
-                        <XStack gap="$2" justifyContent="center">
-                          {HIGHLIGHT_COLORS.map((color) => (
-                            <TouchableOpacity
-                              key={color.value}
-                              style={[styles.colorButton, { backgroundColor: color.value }]}
-                              onPress={() => applyHighlight(color.value)}
-                            />
-                          ))}
-                          <TouchableOpacity
-                            style={[styles.colorButton, styles.noHighlightButton]}
-                            onPress={() => applyHighlight('transparent')}
-                          >
-                            <Text style={styles.noHighlightText}>✕</Text>
-                          </TouchableOpacity>
-                        </XStack>
-                      </View>
-                    </View>
-                  )}
                 </View>
               );
             }
@@ -736,6 +699,42 @@ export default function BibleScreen() {
           })}
         </ScrollView>
       ) : null}
+
+      {selectedVerses.size > 0 && (
+        <>
+          <View style={[styles.selectionToolbar, isDark && styles.selectionToolbarDark]}>
+            <Text style={styles.selectionText}>{getVerseRangeString()}</Text>
+            <XStack gap="$2">
+              <TouchableOpacity style={styles.toolbarButton} onPress={handleCopy}>
+                <Text style={styles.toolbarButtonText}>Copy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.toolbarButton} onPress={handleShare}>
+                <Text style={styles.toolbarButtonText}>Share</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.toolbarButton} onPress={clearSelection}>
+                <Text style={[styles.toolbarButtonText, { color: '#ff4444' }]}>Cancel</Text>
+              </TouchableOpacity>
+            </XStack>
+          </View>
+          <View style={[styles.colorPickerBar, isDark && styles.colorPickerBarDark]}>
+            <XStack gap="$2" justifyContent="center">
+              {HIGHLIGHT_COLORS.map((color) => (
+                <TouchableOpacity
+                  key={color.value}
+                  style={[styles.colorButton, { backgroundColor: color.value }]}
+                  onPress={() => applyHighlight(color.value)}
+                />
+              ))}
+              <TouchableOpacity
+                style={[styles.colorButton, styles.noHighlightButton]}
+                onPress={() => applyHighlight('transparent')}
+              >
+                <Text style={styles.noHighlightText}>✕</Text>
+              </TouchableOpacity>
+            </XStack>
+          </View>
+        </>
+      )}
 
       {localCurrentBook && (
         <View style={styles.chapterScrollContainer}>
