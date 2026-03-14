@@ -3,10 +3,18 @@ import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Ale
 import { YStack, XStack, Spinner } from 'tamagui';
 import { useBible } from '../src/store/BibleContext';
 import { useTheme } from '../src/store/ThemeContext';
-import { getHighlights, saveHighlights, type HighlightData } from '../src/services/theme';
+import { getHighlights, saveHighlights, getTabs, saveTabs, type HighlightData, type TabData } from '../src/services/theme';
 import type { Book } from '../src/types/bible';
 
 const PRIMARY_COLOR = '#304080';
+
+type Tab = {
+  id: string;
+  book: Book;
+  chapterNum: number;
+  currentVerse: number;
+  selectedVerses: Set<number>;
+};
 
 type HighlightKey = string;
 
@@ -40,11 +48,14 @@ export default function BibleScreen() {
   const [showChapterModal, setShowChapterModal] = useState(false);
   const [showVerseModal, setShowVerseModal] = useState(false);
   const [showVersionModal, setShowVersionModal] = useState(false);
+  const [isAddingNewTab, setIsAddingNewTab] = useState(false);
   const [localCurrentBook, setLocalCurrentBook] = useState<Book | null>(null);
   const [localChapterNum, setLocalChapterNum] = useState(1);
   const [localCurrentVerse, setLocalCurrentVerse] = useState(1);
   const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
   const [highlightedVersesMap, setHighlightedVersesMap] = useState<Map<HighlightKey, Map<number, string>>>(new Map());
+  const [tabs, setTabs] = useState<Tab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const versePositionsRef = useRef<{ [key: number]: number }>({});
   const isInitialized = useRef(false);
@@ -65,6 +76,59 @@ export default function BibleScreen() {
     };
     loadHighlights();
   }, []);
+
+  useEffect(() => {
+    const loadTabs = async () => {
+      if (books.length === 0) return;
+      
+      const { tabs: savedTabs, activeTabId: savedActiveTabId } = await getTabs();
+      
+      if (savedTabs.length > 0) {
+        const restoredTabs: Tab[] = savedTabs.map(tabData => {
+          const book = books.find(b => b.id === tabData.bookId);
+          return {
+            id: tabData.id,
+            book: book || books[0],
+            chapterNum: tabData.chapterNum,
+            currentVerse: tabData.currentVerse,
+            selectedVerses: new Set(),
+          };
+        });
+        setTabs(restoredTabs);
+        setActiveTabId(savedActiveTabId);
+        
+        const activeTab = restoredTabs.find(t => t.id === savedActiveTabId) || restoredTabs[0];
+        setLocalCurrentBook(activeTab.book);
+        setLocalChapterNum(activeTab.chapterNum);
+        setLocalCurrentVerse(activeTab.currentVerse);
+        tabsInitialized.current = true;
+        loadChapter(activeTab.book.id, activeTab.chapterNum);
+      } else if (currentBook) {
+        const defaultTab: Tab = {
+          id: `${currentBook.id}-1`,
+          book: currentBook,
+          chapterNum: 1,
+          currentVerse: 1,
+          selectedVerses: new Set(),
+        };
+        setTabs([defaultTab]);
+        setActiveTabId(defaultTab.id);
+        tabsInitialized.current = true;
+        const tabData: TabData[] = [{
+          id: defaultTab.id,
+          bookId: defaultTab.book.id,
+          bookName: defaultTab.book.commonName,
+          chapterNum: defaultTab.chapterNum,
+          currentVerse: defaultTab.currentVerse,
+        }];
+        saveTabs(tabData, defaultTab.id);
+      }
+    };
+    
+    if (currentBook && isInitialized.current) {
+      loadTabs();
+    }
+  }, [books, currentBook?.id]);
 
   const getHighlightKey = (): HighlightKey => {
     return `${localCurrentBook?.id || ''}-${localChapterNum}`;
@@ -96,6 +160,87 @@ export default function BibleScreen() {
   };
 
   const [highlightedVerses, setHighlightedVerses] = useState<Map<number, string>>(new Map());
+  const tabsInitialized = useRef(false);
+
+  const openInNewTab = (book: Book, chapterNum: number) => {
+    const tabId = `${book.id}-${chapterNum}`;
+    const existingTab = tabs.find(t => t.id === tabId);
+    
+    if (existingTab) {
+      setActiveTabId(tabId);
+    } else {
+      const newTab: Tab = {
+        id: tabId,
+        book,
+        chapterNum,
+        currentVerse: 1,
+        selectedVerses: new Set(),
+      };
+      setTabs(prev => {
+        const newTabs = [...prev, newTab];
+        const tabData: TabData[] = newTabs.map(t => ({
+          id: t.id,
+          bookId: t.book.id,
+          bookName: t.book.commonName,
+          chapterNum: t.chapterNum,
+          currentVerse: t.currentVerse,
+        }));
+        saveTabs(tabData, tabId);
+        return newTabs;
+      });
+      setActiveTabId(tabId);
+      loadChapter(book.id, chapterNum);
+    }
+    setShowBookModal(false);
+    setShowChapterModal(false);
+  };
+
+  const closeTab = (tabId: string) => {
+    const tabIndex = tabs.findIndex(t => t.id === tabId);
+    setTabs(prev => {
+      const newTabs = prev.filter(t => t.id !== tabId);
+      const newActiveId = newTabs.length > 0 ? newTabs[Math.max(0, tabIndex - 1)]?.id || null : null;
+      const tabData: TabData[] = newTabs.map(t => ({
+        id: t.id,
+        bookId: t.book.id,
+        bookName: t.book.commonName,
+        chapterNum: t.chapterNum,
+        currentVerse: t.currentVerse,
+      }));
+      saveTabs(tabData, newActiveId);
+      return newTabs;
+    });
+    
+    if (activeTabId === tabId) {
+      if (tabs.length > 1) {
+        const newIndex = tabIndex > 0 ? tabIndex - 1 : 0;
+        const newActiveTab = tabs.filter(t => t.id !== tabId)[newIndex];
+        if (newActiveTab) {
+          setActiveTabId(newActiveTab.id);
+          setLocalCurrentBook(newActiveTab.book);
+          setLocalChapterNum(newActiveTab.chapterNum);
+          setLocalCurrentVerse(newActiveTab.currentVerse);
+          setSelectedVerses(newActiveTab.selectedVerses);
+          loadChapter(newActiveTab.book.id, newActiveTab.chapterNum);
+        }
+      } else {
+        setActiveTabId(null);
+        setLocalCurrentBook(null);
+        setLocalChapterNum(1);
+        setLocalCurrentVerse(1);
+        setSelectedVerses(new Set());
+      }
+    }
+  };
+
+  const switchToTab = (tab: Tab) => {
+    setActiveTabId(tab.id);
+    setLocalCurrentBook(tab.book);
+    setLocalChapterNum(tab.chapterNum);
+    setLocalCurrentVerse(tab.currentVerse);
+    setSelectedVerses(tab.selectedVerses);
+    loadChapter(tab.book.id, tab.chapterNum);
+  };
 
   useEffect(() => {
     if (currentBook) {
@@ -108,6 +253,8 @@ export default function BibleScreen() {
   }, [currentChapterNum]);
 
   useEffect(() => {
+    if (!tabsInitialized.current) return;
+    
     if (localCurrentBook) {
       setHighlightedVerses(getCurrentHighlights());
     }
@@ -224,17 +371,60 @@ export default function BibleScreen() {
   };
 
   const handleBookSelect = (book: Book) => {
-    setLocalCurrentBook(book);
-    setLocalChapterNum(1);
-    setCurrentBook(book);
-    setCurrentChapterNum(1);
+    if (tabs.length === 0 || isAddingNewTab) {
+      openInNewTab(book, 1);
+      setIsAddingNewTab(false);
+    } else {
+      setLocalCurrentBook(book);
+      setLocalChapterNum(1);
+      setCurrentBook(book);
+      setCurrentChapterNum(1);
+      setSelectedVerses(new Set<number>());
+      
+      setTabs(prev => {
+        const newTabs = prev.map(t => 
+          t.id === activeTabId 
+            ? { ...t, book, chapterNum: 1, currentVerse: 1, selectedVerses: new Set<number>() }
+            : t
+        );
+        const tabData: TabData[] = newTabs.map(t => ({
+          id: t.id,
+          bookId: t.book.id,
+          bookName: t.book.commonName,
+          chapterNum: t.chapterNum,
+          currentVerse: t.currentVerse,
+        }));
+        saveTabs(tabData, activeTabId);
+        return newTabs;
+      });
+      
+      loadChapter(book.id, 1);
+    }
     setShowBookModal(false);
-    loadChapter(book.id, 1);
+    setIsAddingNewTab(false);
   };
 
   const handleChapterSelect = (chapter: number) => {
     setLocalChapterNum(chapter);
     setCurrentChapterNum(chapter);
+    setSelectedVerses(new Set<number>());
+    
+    setTabs(prev => {
+      const newTabs = prev.map(t => 
+        t.id === activeTabId 
+          ? { ...t, chapterNum: chapter, selectedVerses: new Set<number>() }
+          : t
+      );
+      const tabData: TabData[] = newTabs.map(t => ({
+        id: t.id,
+        bookId: t.book.id,
+        bookName: t.book.commonName,
+        chapterNum: t.chapterNum,
+        currentVerse: t.currentVerse,
+      }));
+      saveTabs(tabData, activeTabId);
+      return newTabs;
+    });
     if (localCurrentBook) {
       loadChapter(localCurrentBook.id, chapter);
     }
@@ -377,6 +567,49 @@ export default function BibleScreen() {
 
   return (
     <View style={styles.container}>
+      {tabs.length > 0 && (
+        <View style={[styles.tabBar, isDark && styles.tabBarDark]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScrollView}>
+            <XStack gap="$1">
+              {tabs.map((tab) => (
+                <TouchableOpacity
+                  key={tab.id}
+                  style={[
+                    styles.tab,
+                    activeTabId === tab.id && styles.tabActive,
+                  ]}
+                  onPress={() => switchToTab(tab)}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTabId === tab.id && styles.tabTextActive,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {tab.book.commonName} {tab.chapterNum}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.tabClose}
+                    onPress={() => closeTab(tab.id)}
+                  >
+                    <Text style={styles.tabCloseText}>✕</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
+            </XStack>
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.addTabButton}
+            onPress={() => {
+              setIsAddingNewTab(true);
+              setShowBookModal(true);
+            }}
+          >
+            <Text style={styles.addTabButtonText}>+</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       {isLoading ? (
         <View style={styles.loaderContainer}>
           <Spinner size="large" color={PRIMARY_COLOR} />
@@ -906,5 +1139,62 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    paddingVertical: 8,
+  },
+  tabBarDark: {
+    backgroundColor: '#1e1e1e',
+    borderBottomColor: '#333',
+  },
+  tabScrollView: {
+    flex: 1,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e0e0e0',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    marginLeft: 8,
+    maxWidth: 150,
+  },
+  tabActive: {
+    backgroundColor: PRIMARY_COLOR,
+  },
+  tabText: {
+    fontSize: 12,
+    color: '#333',
+    marginRight: 6,
+  },
+  tabTextActive: {
+    color: '#fff',
+  },
+  tabClose: {
+    padding: 2,
+  },
+  tabCloseText: {
+    fontSize: 10,
+    color: '#666',
+  },
+  addTabButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: PRIMARY_COLOR,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  addTabButtonText: {
+    fontSize: 20,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });

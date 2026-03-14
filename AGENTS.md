@@ -86,13 +86,17 @@ pnpm run lint
 - [x] Chapter navigation
 - [x] Verse display with formatting
 - [x] Verse navigation with selection
-- [x] Verse highlighting
+- [x] Verse highlighting with colors (Yellow, Green, Blue, Pink, Orange, Purple)
+- [x] Highlight persistence per book/chapter
+- [x] Copy selected verses
+- [x] Share selected verses
 - [x] Auto-scroll to verse
 - [x] Offline caching
 - [x] State persistence (remembers last read position)
 - [x] Bottom navigation bar (Book, Chapter, Verse, Translation)
 - [x] Theme switcher (light/dark/system)
-- [x] Fix modal styling
+- [x] Tab icons (Bible, Devotional, Search, Settings)
+- [x] Convert UI to Tamagui
 
 ### In Progress
 - Search functionality
