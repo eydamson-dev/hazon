@@ -5,6 +5,7 @@
 - Use pnpm for package management
 - Run typecheck before committing
 - Don't commit until user asks
+- **Inform user before switching solutions** (e.g., storage, APIs, libraries) - never change approaches without informing first
 
 ## Project Setup
 
@@ -45,26 +46,26 @@ pnpm run lint
 
 ## Bible API
 
-### API Used
-- **HelloAO.org** - Free Bible API (https://bible.helloao.org)
-- No API key required
-- Returns JSON format
+### Data Source
+- **Beblia/Holy-Bible-XML-Format** GitHub repository
+- URL: https://github.com/Beblia/Holy-Bible-XML-Format
+- XML files from raw GitHub CDN: `https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master/{file}.xml`
 
-### Available Translations
+### Available Translations (14 English versions)
 - `eng_kjv` - King James Version (KJV)
-- `BSB` - Berean Standard Bible
-- `ENGWEBP` - World English Bible (WEB)
+- `eng_niv` - New International Version (NIV)
+- `eng_esv` - English Standard Version (ESV)
+- `eng_nasb` - New American Standard Bible (NASB)
+- `eng_nlt` - New Living Translation (NLT)
+- `eng_msg` - The Message (MSG)
+- `eng_amp` - Amplified Bible (AMP)
+- `eng_ww` - World English Bible (WEB)
 - `eng_bbe` - Bible in Basic English (BBE)
-- `tgl_ulb` - Tagalog Bible
-
-### API Endpoints
-- Translations: `https://bible.helloao.org/api/available_translations.json`
-- Books: `https://bible.helloao.org/api/{translation}/books.json`
-- Chapter: `https://bible.helloao.org/api/{translation}/{book}/{chapter}.json`
+- And more...
 
 ### Data Storage
-- Books cached in AsyncStorage
-- Chapters cached for offline reading
+- IndexedDB for downloaded Bible XML data (browser database, no size limits)
+- AsyncStorage for books list and chapter cache
 - Reading state (book, chapter, translation) persisted
 
 ## App Structure
@@ -103,26 +104,19 @@ pnpm run lint
 - [x] Theme switcher (light/dark/system)
 - [x] Tab icons (Bible, Devotional, Search, Settings)
 - [x] Convert UI to Tamagui
+- [x] Beblia GitHub XML translations (14 versions)
+- [x] IndexedDB storage for translations
+- [x] Compare translations feature
+- [x] Download Bible versions for offline
 
 ### In Progress
 - Search functionality
 
 ### Pending
-- Paragraph/continuous reading mode (HelloAO.org API lacks paragraph break data)
 - Bookmarks/favorites
-- Download Bible versions for offline
 - Devotional section
 
 ## Development Notes
-
-### Paragraph Mode Research
-- HelloAO.org API does NOT provide `line_break` markers in chapter data
-- Tested translations: KJV, WEB, BSB - all return 0 paragraph breaks
-- Possible solutions:
-  1. Use a different Bible API with paragraph markers (e.g., API.Bible with special markup)
-  2. Bundle KJV with embedded paragraph JSON data
-  3. Calculate paragraph breaks algorithmically (e.g., every 3-5 verses)
-  4. Use translation-specific formatting rules
 
 ### Color Scheme
 - Primary: #304080 (blue)

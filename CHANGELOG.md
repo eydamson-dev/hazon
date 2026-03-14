@@ -28,6 +28,19 @@ All notable changes to this project will be documented in this file.
 - Chapter scroll position on load
 
 ### In Progress
+
+## [1.1.0] - 2026-03-14
+
+### Added
+- Beblia GitHub XML Bible translations (14 English versions)
+- IndexedDB storage for downloaded translations (no size limits)
+- Compare translations feature (view selected verse in multiple versions)
+- Offline reading support after first download
+
+### Changed
+- Replaced HelloAO.org API with Beblia GitHub XML repository
+- Auto-download translation when selected
+- Book IDs now use xml_* format for Beblia translations
 - Search functionality
 - Paragraph/continuous reading mode
 - Bookmarks/favorites
