@@ -531,6 +531,27 @@ export default function BibleScreen() {
     </YStack>
   );
 
+  const hasDownloadedTranslation = versions.length > 0;
+
+  if (!hasDownloadedTranslation) {
+    return (
+      <View style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={styles.emptyTitle}>No Translations Downloaded</Text>
+          <Text style={styles.emptySubtitle}>
+            Download a Bible translation to get started
+          </Text>
+          <TouchableOpacity
+            style={styles.downloadButton}
+            onPress={() => router.push('/settings')}
+          >
+            <Text style={styles.downloadButtonText}>Download Translations</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   if (isLoading && books.length === 0) {
     return (
       <View style={styles.container}>
@@ -1383,6 +1404,30 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
   compareError: {
     color: '#ff4444',
     fontSize: 14,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: isDark ? '#eee' : '#333',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    color: isDark ? '#888' : '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  downloadButton: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+  },
+  downloadButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
   emptyState: {
     padding: 40,

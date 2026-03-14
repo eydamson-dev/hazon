@@ -32,15 +32,23 @@ All notable changes to this project will be documented in this file.
 ## [1.1.0] - 2026-03-14
 
 ### Added
-- Beblia GitHub XML Bible translations (14 English versions)
+- Beblia GitHub XML Bible translations (998+ translations available)
 - IndexedDB storage for downloaded translations (no size limits)
 - Compare translations feature (view selected verse in multiple versions)
 - Offline reading support after first download
+- Empty state with "Download Translations" button when no translations downloaded
+- Auto-load Genesis Chapter 1 when a translation is first downloaded
 
 ### Changed
 - Replaced HelloAO.org API with Beblia GitHub XML repository
-- Auto-download translation when selected
+- Removed hardcoded translations - users now download any translation they want
 - Book IDs now use xml_* format for Beblia translations
+
+### Fixed
+- Translation selector now shows only downloaded translations
+- Ensure deleted translations are properly removed from list
+
+### In Progress
 - Search functionality
 - Paragraph/continuous reading mode
 - Bookmarks/favorites

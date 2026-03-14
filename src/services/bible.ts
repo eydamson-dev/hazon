@@ -136,30 +136,6 @@ export async function fetchAvailableTranslations(): Promise<AvailableTranslation
   }
 }
 
-export const BEBLIA_VERSIONS: { id: string; name: string; xmlFile: string }[] = [
-  { id: 'eng_niv', name: 'New International Version (NIV)', xmlFile: 'EnglishNIVBible.xml' },
-  { id: 'eng_kjv', name: 'King James Version (KJV)', xmlFile: 'EnglishKJVBible.xml' },
-  { id: 'eng_esv', name: 'English Standard Version (ESV)', xmlFile: 'EnglishESVBible.xml' },
-  { id: 'eng_nasb', name: 'New American Standard Bible (NASB)', xmlFile: 'EnglishNASBBible.xml' },
-  { id: 'eng_nlt', name: 'New Living Translation (NLT)', xmlFile: 'EnglishNLTBible.xml' },
-  { id: 'eng_msg', name: 'The Message (MSG)', xmlFile: 'EnglishMSGBible.xml' },
-  { id: 'eng_amp', name: 'Amplified Bible (AMP)', xmlFile: 'EnglishAMPBible.xml' },
-  { id: 'eng_niv84', name: 'New International Version 1984', xmlFile: 'EnglishNIV1984Bible.xml' },
-  { id: 'eng_kj21', name: 'King James Version 21st Century', xmlFile: 'EnglishKJ21Bible.xml' },
-  { id: 'eng_akjv', name: 'American King James Version', xmlFile: 'EnglishAKJVBible.xml' },
-  { id: 'eng_ww', name: 'World English Bible (WEB)', xmlFile: 'EnglishWEBBible.xml' },
-  { id: 'eng_bbe', name: 'Bible in Basic English (BBE)', xmlFile: 'EnglishBBEBible.xml' },
-  { id: 'eng_darby', name: 'Darby Translation', xmlFile: 'EnglishDarbyBible.xml' },
-  { id: 'eng_ylt', name: 'Young\'s Literal Translation', xmlFile: 'EnglishYLTBible.xml' },
-];
-
-export const AVAILABLE_VERSIONS: BibleVersion[] = BEBLIA_VERSIONS.map(v => ({
-  id: v.id,
-  shortName: v.id.replace('eng_', '').toUpperCase(),
-  name: v.name,
-  isDownloaded: false,
-}));
-
 export async function getSelectedTranslation(): Promise<string> {
   try {
     const selected = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_TRANSLATION);
@@ -347,9 +323,9 @@ export async function downloadBebliaTranslation(
   xmlFile?: string,
   translationName?: string
 ): Promise<boolean> {
-  let version = BEBLIA_VERSIONS.find(v => v.id === translationId);
+  let version: { id: string; name: string; xmlFile: string } | undefined;
   
-  if (!version && xmlFile) {
+  if (xmlFile) {
     version = { id: translationId, name: translationName || translationId, xmlFile };
   }
   

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getSelectedTranslation, setSelectedTranslation as saveSelectedTranslation, getDownloadedVersions, AVAILABLE_VERSIONS, getReadingState, saveReadingState, BEBLIA_VERSIONS, downloadBebliaTranslation, getBebliaBooks, getBebliaChapter } from '../services/bible';
+import { getSelectedTranslation, setSelectedTranslation as saveSelectedTranslation, getDownloadedVersions, getReadingState, saveReadingState, downloadBebliaTranslation, getBebliaBooks, getBebliaChapter } from '../services/bible';
 import type { BibleVersion, Book, Chapter } from '../types/bible';
 
 interface BibleContextType {
@@ -22,8 +22,8 @@ interface BibleContextType {
 const BibleContext = createContext<BibleContextType | undefined>(undefined);
 
 export function BibleProvider({ children }: { children: ReactNode }) {
-  const [versions, setVersions] = useState<BibleVersion[]>(AVAILABLE_VERSIONS);
-  const [selectedVersion, setSelectedVersionState] = useState<BibleVersion>(AVAILABLE_VERSIONS[0]);
+  const [versions, setVersions] = useState<BibleVersion[]>([]);
+  const [selectedVersion, setSelectedVersionState] = useState<BibleVersion | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [currentBook, setCurrentBook] = useState<Book | null>(null);
@@ -32,74 +32,65 @@ export function BibleProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadInitialState();
     refreshDownloadedVersions();
   }, []);
+
+  useEffect(() => {
+    if (versions.length > 0 && !selectedVersion) {
+      loadInitialState();
+    }
+  }, [versions]);
 
   const refreshDownloadedVersions = async () => {
     const downloaded = await getDownloadedVersions();
     
-    setVersions(prev => {
-      const existingIds = new Set(prev.map(v => v.id));
-      const newVersions: BibleVersion[] = [];
-      
-      for (const d of downloaded) {
-        if (!existingIds.has(d.id)) {
-          const cleanId = d.id.replace('eng_', '').replace('beblia_', '').replace('.xml', '');
-          const formattedName = cleanId.replace(/([A-Z])/g, ' $1').trim();
-          const displayName = d.name === 'Unknown' || !d.name ? formattedName : d.name;
-          newVersions.push({
-            id: d.id,
-            shortName: cleanId.substring(0, 10).toUpperCase(),
-            name: displayName,
-            isDownloaded: true,
-          });
-        }
-      }
-      
-      return [...prev.map(v => ({
-        ...v,
-        isDownloaded: downloaded.some(d => d.id === v.id),
-      })), ...newVersions];
+    const newVersions: BibleVersion[] = downloaded.map(d => {
+      const cleanId = d.id.replace('eng_', '').replace('beblia_', '').replace('.xml', '');
+      const formattedName = cleanId.replace(/([A-Z])/g, ' $1').trim();
+      const displayName = d.name === 'Unknown' || !d.name ? formattedName : d.name;
+      return {
+        id: d.id,
+        shortName: cleanId.substring(0, 10).toUpperCase(),
+        name: displayName,
+        isDownloaded: true,
+      };
     });
+    
+    setVersions(newVersions);
   };
 
   const loadInitialState = async () => {
     setIsLoading(true);
     try {
       const savedId = await getSelectedTranslation();
-      const version = versions.find(v => v.id === savedId) || versions[0];
+      let version = versions.find(v => v.id === savedId);
       
-      const isBeblia = BEBLIA_VERSIONS.some(v => v.id === savedId);
-      const isDownloaded = version.isDownloaded;
-      
-      if (isBeblia && !isDownloaded) {
-        const success = await downloadBebliaTranslation(savedId);
-        if (!success) {
-          setError('Failed to download translation');
-          setIsLoading(false);
-          return;
-        }
-        await refreshDownloadedVersions();
+      if (!version && versions.length > 0) {
+        version = versions[0];
       }
       
-      setSelectedVersionState({ ...version, isDownloaded: true });
-      
-      if (savedId) {
-        const booksData = await fetchAndCacheBooks(savedId);
-        setBooks(booksData);
-        
-        const readingState = await getReadingState();
-        const defaultBookId = isBeblia ? 'xml_1' : 'GEN';
-        const bookId = readingState?.bookId || defaultBookId;
-        const chapter = readingState?.chapter || 1;
-        
-        const book = booksData.find(b => b.id === bookId) || booksData[0];
-        setCurrentBook(book);
-        setCurrentChapterNum(chapter);
-        
-        await loadChapter(bookId, chapter, savedId);
+      if (!version) {
+        setError('No Bible translations downloaded. Please download a translation from Settings.');
+        setIsLoading(false);
+        return;
       }
+      
+      setSelectedVersionState(version);
+      await saveSelectedTranslation(version.id);
+      
+      const booksData = await fetchAndCacheBooks(version.id);
+      setBooks(booksData);
+      
+      const readingState = await getReadingState();
+      const defaultBookId = 'xml_1';
+      const bookId = readingState?.bookId || defaultBookId;
+      const chapter = readingState?.chapter || 1;
+      
+      const book = booksData.find(b => b.id === bookId) || booksData[0];
+      setCurrentBook(book);
+      setCurrentChapterNum(chapter);
+      
+      await loadChapter(bookId, chapter, version.id);
     } catch (err) {
       console.error('Error loading initial state:', err);
       setError('Failed to load Bible');
@@ -116,26 +107,6 @@ export function BibleProvider({ children }: { children: ReactNode }) {
     const version = versions.find(v => v.id === versionId);
     if (!version) return;
     
-    const isBeblia = BEBLIA_VERSIONS.some(v => v.id === versionId);
-    const isDownloaded = version.isDownloaded;
-    
-    if (isBeblia && !isDownloaded) {
-      setIsLoading(true);
-      try {
-        const success = await downloadBebliaTranslation(versionId);
-        if (!success) {
-          setError('Failed to download translation');
-          return;
-        }
-        await refreshDownloadedVersions();
-      } catch (err) {
-        setError('Failed to download translation');
-        return;
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    
     setSelectedVersionState({ ...version, isDownloaded: true });
     await saveSelectedTranslation(versionId);
     
@@ -144,6 +115,11 @@ export function BibleProvider({ children }: { children: ReactNode }) {
     
     if (currentBook) {
       await loadChapter(currentBook.id, currentChapterNum, versionId);
+    } else if (booksData.length > 0) {
+      const genesis = booksData.find(b => b.id === 'xml_1') || booksData[0];
+      setCurrentBook(genesis);
+      setCurrentChapterNum(1);
+      await loadChapter(genesis.id, 1, versionId);
     }
   };
 
@@ -162,6 +138,7 @@ export function BibleProvider({ children }: { children: ReactNode }) {
   };
 
   const loadChapter = async (bookId: string, chapter: number, versionId?: string) => {
+    if (!selectedVersion) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -193,10 +170,17 @@ export function BibleProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const defaultVersion: BibleVersion = {
+    id: '',
+    shortName: '',
+    name: 'No Translation',
+    isDownloaded: false,
+  };
+
   return (
     <BibleContext.Provider
       value={{
-        selectedVersion,
+        selectedVersion: selectedVersion || defaultVersion,
         versions,
         books,
         currentChapter,
