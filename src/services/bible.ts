@@ -119,7 +119,7 @@ export async function fetchAvailableTranslations(): Promise<AvailableTranslation
     const translations: AvailableTranslation[] = files
       .filter(f => f.name.endsWith('.xml'))
       .map(f => {
-        const name = f.name.replace('.xml', '').replace(/([A-Z])/g, ' $1').trim();
+        const name = f.name.replace('.xml', '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2').trim();
         return {
           id: `beblia_${f.name.toLowerCase().replace('.xml', '')}`,
           name,

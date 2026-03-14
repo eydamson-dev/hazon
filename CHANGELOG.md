@@ -47,6 +47,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Translation selector now shows only downloaded translations
 - Ensure deleted translations are properly removed from list
+- Translation name formatting (NIV, ESV now display correctly instead of N I V)
 
 ### In Progress
 - Search functionality
