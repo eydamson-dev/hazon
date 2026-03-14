@@ -4,7 +4,8 @@ import { YStack, XStack, Spinner } from 'tamagui';
 import { useBible } from '../src/store/BibleContext';
 import { useTheme } from '../src/store/ThemeContext';
 import { getHighlights, saveHighlights, getTabs, saveTabs, type HighlightData, type TabData } from '../src/services/theme';
-import type { Book } from '../src/types/bible';
+import { getBebliaChapter } from '../src/services/bible';
+import type { Book, Chapter } from '../src/types/bible';
 
 const PRIMARY_COLOR = '#304080';
 
@@ -56,6 +57,9 @@ export default function BibleScreen() {
   const [highlightedVersesMap, setHighlightedVersesMap] = useState<Map<HighlightKey, Map<number, string>>>(new Map());
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareChapters, setCompareChapters] = useState<{ version: typeof versions[0]; chapter: Chapter | null }[]>([]);
+  const [isLoadingCompare, setIsLoadingCompare] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const chapterScrollRef = useRef<ScrollView>(null);
   const versePositionsRef = useRef<{ [key: number]: number }>({});
@@ -378,6 +382,28 @@ export default function BibleScreen() {
         console.log('Share error:', error);
       }
     }
+  };
+
+  const handleCompare = async () => {
+    setIsLoadingCompare(true);
+    setShowCompareModal(true);
+    
+    const sortedVerses = Array.from(selectedVerses).sort((a, b) => a - b);
+    const results: { version: typeof versions[0]; chapter: Chapter | null }[] = [];
+    
+    for (const version of versions) {
+      if (!version.isDownloaded) continue;
+      try {
+        const bookNumber = parseInt(localCurrentBook!.id.replace('xml_', ''));
+        const chapter = await getBebliaChapter(version.id, bookNumber, localChapterNum);
+        results.push({ version, chapter });
+      } catch (error) {
+        results.push({ version, chapter: null });
+      }
+    }
+    
+    setCompareChapters(results);
+    setIsLoadingCompare(false);
   };
 
   const handleVerseSelect = (verse: number) => {
@@ -711,6 +737,9 @@ export default function BibleScreen() {
               <TouchableOpacity style={styles.toolbarButton} onPress={handleShare}>
                 <Text style={styles.toolbarButtonText}>Share</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.toolbarButton} onPress={handleCompare}>
+                <Text style={styles.toolbarButtonText}>Compare</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.toolbarButton} onPress={clearSelection}>
                 <Text style={[styles.toolbarButtonText, { color: '#ff4444' }]}>Cancel</Text>
               </TouchableOpacity>
@@ -906,6 +935,46 @@ export default function BibleScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
+        </View>
+      </Modal>
+
+      <Modal visible={showCompareModal} animationType="slide">
+        <View style={[styles.modalContainer, { flex: 1 }]}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>
+              {localCurrentBook?.commonName} {localChapterNum}
+            </Text>
+            <TouchableOpacity onPress={() => setShowCompareModal(false)}>
+              <Text style={styles.closeButton}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          {isLoadingCompare ? (
+            <View style={styles.loaderContainer}>
+              <Spinner size="large" color={PRIMARY_COLOR} />
+            </View>
+          ) : (
+            <ScrollView style={styles.modalContent}>
+              {compareChapters.map((item, index) => (
+                <View key={item.version.id} style={styles.compareSection}>
+                  <Text style={styles.compareVersionTitle}>{item.version.name}</Text>
+                  {item.chapter ? (
+                    item.chapter.chapter.content
+                      .filter(c => c.type === 'verse' && selectedVerses.has(c.number || 0))
+                      .map((verse) => (
+                        <View key={verse.number} style={styles.compareVerse}>
+                          <Text style={styles.compareVerseNumber}>{verse.number}</Text>
+                          <Text style={styles.compareVerseText}>
+                            {verse.content?.map((c: any) => typeof c === 'string' ? c : c.text).join(' ')}
+                          </Text>
+                        </View>
+                      ))
+                  ) : (
+                    <Text style={styles.compareError}>Failed to load</Text>
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+          )}
         </View>
       </Modal>
     </View>
@@ -1261,5 +1330,36 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
   },
   chapterButtonTextActive: {
     color: '#fff',
+  },
+  compareSection: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#333' : '#e0e0e0',
+  },
+  compareVersionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: PRIMARY_COLOR,
+    marginBottom: 8,
+  },
+  compareVerse: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  compareVerseNumber: {
+    width: 30,
+    fontSize: 12,
+    color: PRIMARY_COLOR,
+    fontWeight: '600',
+  },
+  compareVerseText: {
+    flex: 1,
+    fontSize: 14,
+    color: isDark ? '#ddd' : '#333',
+    lineHeight: 22,
+  },
+  compareError: {
+    color: '#ff4444',
+    fontSize: 14,
   },
 });

@@ -80,3 +80,29 @@ export interface Bookmark {
   note?: string;
   createdAt: number;
 }
+
+export interface XmlVerse {
+  number: number;
+  content: string;
+}
+
+export interface XmlChapter {
+  number: number;
+  verses: XmlVerse[];
+}
+
+export interface XmlBook {
+  number: number;
+  name: string;
+  chapters: XmlChapter[];
+}
+
+export interface XmlTestament {
+  name: string;
+  books: XmlBook[];
+}
+
+export interface XmlBible {
+  translation: string;
+  testament: XmlTestament[];
+}
