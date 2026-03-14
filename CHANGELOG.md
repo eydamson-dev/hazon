@@ -38,6 +38,7 @@ All notable changes to this project will be documented in this file.
 - Offline reading support after first download
 - Empty state with "Download Translations" button when no translations downloaded
 - Auto-load Genesis Chapter 1 when a translation is first downloaded
+- Custom OpenCode skill for Bible App development (.opencode/skills/cjcrsg-bible-app)
 
 ### Changed
 - Replaced HelloAO.org API with Beblia GitHub XML repository
