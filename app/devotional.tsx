@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal } from 'react-native';
+import { useRouter } from 'expo-router';
 import { YStack, XStack, Spinner } from 'tamagui';
 import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
-import type { Devotion } from '../src/types/devotional';
+import type { Devotion, VerseRef } from '../src/types/devotional';
 
 const PRIMARY_COLOR = '#304080';
 
@@ -13,6 +14,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 type ViewMode = 'list' | 'calendar' | 'trash';
 
 export default function Devotional() {
+  const router = useRouter();
   const { isDark } = useTheme();
   const { devotions, trash, isLoading, deleteDevotion, restoreDevotion, permanentlyDeleteDevotion, emptyTrash, createDevotion, updateDevotion } = useDevotional();
   
@@ -22,6 +24,7 @@ export default function Devotional() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
+  const [editVerseRefs, setEditVerseRefs] = useState<VerseRef[]>([]);
 
   const styles = createStyles(isDark);
 
@@ -71,12 +74,23 @@ export default function Devotional() {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    const success = await updateDevotion(selectedDevotion.id, editTitle.trim(), editContent.trim(), selectedDevotion.verseRefs);
+    const success = await updateDevotion(selectedDevotion.id, editTitle.trim(), editContent.trim(), editVerseRefs);
     if (success) {
       setSelectedDevotion(null);
     } else {
       Alert.alert('Error', 'Failed to save changes');
     }
+  };
+
+  const handleRemoveVerse = (index: number) => {
+    const newRefs = [...editVerseRefs];
+    newRefs.splice(index, 1);
+    setEditVerseRefs(newRefs);
+  };
+
+  const handleAddVerse = () => {
+    setSelectedDevotion(null);
+    router.push('/');
   };
 
   const renderCalendar = () => {
@@ -149,6 +163,7 @@ export default function Devotional() {
           setSelectedDevotion(devotion);
           setEditTitle(devotion.title);
           setEditContent(devotion.content);
+          setEditVerseRefs([...devotion.verseRefs]);
         }}
         disabled={isTrash}
       >
@@ -231,17 +246,27 @@ export default function Devotional() {
             numberOfLines={10}
             textAlignVertical="top"
           />
-          {selectedDevotion?.verseRefs.length ? (
-            <>
-              <Text style={styles.inputLabel}>Verses</Text>
-              {selectedDevotion.verseRefs.map((v, i) => (
-                <View key={i} style={styles.verseRefBox}>
+          <View style={styles.versesHeader}>
+            <Text style={styles.inputLabel}>Verses</Text>
+            <TouchableOpacity onPress={handleAddVerse}>
+              <Text style={styles.addVerseButton}>+ Add Verse</Text>
+            </TouchableOpacity>
+          </View>
+          {editVerseRefs.length > 0 ? (
+            editVerseRefs.map((v, i) => (
+              <View key={i} style={styles.verseRefBox}>
+                <View style={styles.verseRefRow}>
                   <Text style={styles.verseRefText}>{v.bookName} {v.chapter}:{v.verses.join(',')}</Text>
-                  {v.text && <Text style={styles.verseText}>{v.text}</Text>}
+                  <TouchableOpacity onPress={() => handleRemoveVerse(i)}>
+                    <Text style={styles.removeVerseButton}>✕</Text>
+                  </TouchableOpacity>
                 </View>
-              ))}
-            </>
-          ) : null}
+                {v.text && <Text style={styles.verseText}>{v.text}</Text>}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noVersesText}>No verses added. Tap "+ Add Verse" to add verses from the Bible.</Text>
+          )}
         </ScrollView>
       </View>
     </Modal>
@@ -629,6 +654,36 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
+  },
+  versesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  verseRefRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  addVerseButton: {
+    color: PRIMARY_COLOR,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  removeVerseButton: {
+    color: '#ff4444',
+    fontSize: 16,
+    fontWeight: '600',
+    paddingLeft: 12,
+  },
+  noVersesText: {
+    fontSize: 14,
+    color: isDark ? '#666' : '#999',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 16,
   },
   verseRefText: {
     fontSize: 14,
