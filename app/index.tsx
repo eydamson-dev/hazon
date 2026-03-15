@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Alert, Clipboard } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Alert, Clipboard, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { YStack, XStack, Spinner } from 'tamagui';
 import { useBible } from '../src/store/BibleContext';
 import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
@@ -548,9 +547,9 @@ export default function BibleScreen() {
   const styles = createStyles(isDark);
 
   const renderBookList = (bookList: Book[], title: string) => (
-    <YStack padding="$4">
+    <View style={{ padding: 16 }}>
       <Text style={styles.bookSectionTitle}>{title}</Text>
-      <XStack flexWrap="wrap" gap="$2">
+      <View style={{ flexWrap: 'wrap', flexDirection: 'row', gap: 8 }}>
         {bookList.map((book) => (
           <TouchableOpacity
             key={book.id}
@@ -571,8 +570,8 @@ export default function BibleScreen() {
             </Text>
           </TouchableOpacity>
         ))}
-      </XStack>
-    </YStack>
+      </View>
+    </View>
   );
 
   const hasDownloadedTranslation = versions.length > 0;
@@ -599,7 +598,7 @@ export default function BibleScreen() {
   if (isLoading && books.length === 0) {
     return (
       <View style={styles.container}>
-        <Spinner size="large" color={PRIMARY_COLOR} />
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
         <Text style={styles.loadingText}>Loading Bible...</Text>
       </View>
     );
@@ -684,7 +683,7 @@ export default function BibleScreen() {
       {tabs.length > 0 && (
         <View style={[styles.tabBar, isDark && styles.tabBarDark]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScrollView}>
-            <XStack gap="$1">
+            <View style={{ flexDirection: 'row', gap: 4 }}>
               {tabs.map((tab) => (
                 <TouchableOpacity
                   key={tab.id}
@@ -711,7 +710,7 @@ export default function BibleScreen() {
                   </TouchableOpacity>
                 </TouchableOpacity>
               ))}
-            </XStack>
+            </View>
           </ScrollView>
           <TouchableOpacity
             style={styles.addTabButton}
@@ -726,7 +725,7 @@ export default function BibleScreen() {
       )}
       {isLoading ? (
         <View style={styles.loaderContainer}>
-          <Spinner size="large" color={PRIMARY_COLOR} />
+          <ActivityIndicator size="large" color={PRIMARY_COLOR} />
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
@@ -819,7 +818,7 @@ export default function BibleScreen() {
             </TouchableOpacity>
           </View>
           <View style={[styles.colorPickerBar, isDark && styles.colorPickerBarDark]}>
-            <XStack gap="$2" justifyContent="center">
+            <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center' }}>
               {HIGHLIGHT_COLORS.map((color) => (
                 <TouchableOpacity
                   key={color.value}
@@ -833,7 +832,7 @@ export default function BibleScreen() {
               >
                 <Text style={styles.noHighlightText}>✕</Text>
               </TouchableOpacity>
-            </XStack>
+            </View>
           </View>
         </>
       )}
@@ -913,7 +912,7 @@ export default function BibleScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.modalContent}>
-            <XStack flexWrap="wrap" padding="$4" gap="$2">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 8 }}>
               {Array.from({ length: localCurrentBook?.numberOfChapters || 50 }, (_, i) => i + 1).map(
                 (chapter) => (
                   <TouchableOpacity
@@ -935,7 +934,7 @@ export default function BibleScreen() {
                   </TouchableOpacity>
                 )
               )}
-            </XStack>
+            </View>
           </ScrollView>
         </View>
       </Modal>
@@ -949,7 +948,7 @@ export default function BibleScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.modalContent}>
-            <XStack flexWrap="wrap" padding="$4" gap="$2">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 8 }}>
               {Array.from({ length: currentChapter?.chapter?.content?.filter((item) => item.type === 'verse').length || 30 }, (_, i) => i + 1).map(
                 (verse) => (
                   <TouchableOpacity
@@ -971,7 +970,7 @@ export default function BibleScreen() {
                   </TouchableOpacity>
                 )
               )}
-            </XStack>
+            </View>
           </ScrollView>
         </View>
       </Modal>
@@ -1043,7 +1042,7 @@ export default function BibleScreen() {
           </View>
           {isLoadingCompare ? (
             <View style={styles.loaderContainer}>
-              <Spinner size="large" color={PRIMARY_COLOR} />
+              <ActivityIndicator size="large" color={PRIMARY_COLOR} />
             </View>
           ) : (
             <ScrollView style={styles.modalContent}>

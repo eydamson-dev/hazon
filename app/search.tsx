@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
-import { YStack } from "tamagui";
 import { useTheme } from "../src/store/ThemeContext";
 import { useBible } from "../src/store/BibleContext";
 import { searchBible, type SearchResult } from "../src/services/bible";
@@ -96,7 +95,7 @@ export default function Search() {
   ), [styles, handleResultPress, query]);
 
   return (
-    <YStack style={styles.container} flex={1}>
+    <View style={[styles.container, { flex: 1 }]}>
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -141,7 +140,7 @@ export default function Search() {
           </Text>
         </View>
       )}
-    </YStack>
+    </View>
   );
 }
 

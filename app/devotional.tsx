@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
-import { YStack, XStack, Spinner } from 'tamagui';
 import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
 import { useBible } from '../src/store/BibleContext';
@@ -451,14 +450,14 @@ export default function Devotional() {
 
   if (isLoading) {
     return (
-      <YStack style={styles.container} flex={1} justifyContent="center" alignItems="center">
-        <Spinner size="large" color={PRIMARY_COLOR} />
-      </YStack>
+      <View style={[styles.container, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
     );
   }
 
   return (
-    <YStack style={styles.container} flex={1}>
+    <View style={[styles.container, { flex: 1 }]}>
       <View style={styles.tabs}>
         <TouchableOpacity style={[styles.tab, viewMode === 'list' && styles.tabActive]} onPress={() => setViewMode('list')}>
           <Text style={[styles.tabText, viewMode === 'list' && styles.tabTextActive]}>All</Text>
@@ -543,7 +542,7 @@ export default function Devotional() {
       {renderCreateModal()}
       {renderDetailModal()}
       {renderDateFilterModal()}
-    </YStack>
+    </View>
   );
 }
 

@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import { Paths, File, Directory } from 'expo-file-system';
 import type { Book, Chapter, BibleVersion, XmlBible, XmlBook, XmlChapter, XmlVerse, VerseContent } from '../types/bible';
 
 const BEBLIA_BASE_URL = 'https://raw.githubusercontent.com/Beblia/Holy-Bible-XML-Format/master';
@@ -15,9 +17,25 @@ const IDB_NAME = 'bible-translations';
 const IDB_VERSION = 1;
 const TRANSLATIONS_STORE = 'translations';
 
-let idb: IDBDatabase | null = null;
+const isWeb = Platform.OS === 'web';
 
-async function getIDB(): Promise<IDBDatabase> {
+const translationsDir = isWeb ? null : new Directory(Paths.document, 'translations');
+
+async function ensureTranslationsDir(): Promise<void> {
+  if (isWeb || !translationsDir) return;
+  if (!translationsDir.exists) {
+    translationsDir.create();
+  }
+}
+
+function getTranslationFile(translationId: string): File {
+  return new File(translationsDir!, `${translationId}.json`);
+}
+
+let idb: IDBDatabase | null = isWeb ? null : null;
+
+async function getIDB(): Promise<IDBDatabase | null> {
+  if (!isWeb) return null;
   if (idb) return idb;
   
   return new Promise((resolve, reject) => {
@@ -40,7 +58,16 @@ async function getIDB(): Promise<IDBDatabase> {
 }
 
 async function saveToIDB(translationId: string, data: XmlBible): Promise<void> {
+  if (!isWeb) {
+    await ensureTranslationsDir();
+    const file = getTranslationFile(translationId);
+    await file.write(JSON.stringify(data));
+    return;
+  }
+  
   const db = await getIDB();
+  if (!db) return;
+  
   return new Promise((resolve, reject) => {
     const tx = db.transaction(TRANSLATIONS_STORE, 'readwrite');
     const store = tx.objectStore(TRANSLATIONS_STORE);
@@ -51,7 +78,16 @@ async function saveToIDB(translationId: string, data: XmlBible): Promise<void> {
 }
 
 async function getFromIDB(translationId: string): Promise<XmlBible | null> {
+  if (!isWeb) {
+    const file = getTranslationFile(translationId);
+    if (!file.exists) return null;
+    const data = await file.text();
+    return JSON.parse(data);
+  }
+  
   const db = await getIDB();
+  if (!db) return null;
+  
   return new Promise((resolve, reject) => {
     const tx = db.transaction(TRANSLATIONS_STORE, 'readonly');
     const store = tx.objectStore(TRANSLATIONS_STORE);
@@ -68,7 +104,17 @@ async function getFromIDB(translationId: string): Promise<XmlBible | null> {
 }
 
 async function deleteFromIDB(translationId: string): Promise<void> {
+  if (!isWeb) {
+    const file = getTranslationFile(translationId);
+    if (file.exists) {
+      file.delete();
+    }
+    return;
+  }
+  
   const db = await getIDB();
+  if (!db) return;
+  
   return new Promise((resolve, reject) => {
     const tx = db.transaction(TRANSLATIONS_STORE, 'readwrite');
     const store = tx.objectStore(TRANSLATIONS_STORE);

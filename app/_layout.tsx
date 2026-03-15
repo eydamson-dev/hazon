@@ -1,7 +1,6 @@
 import { Tabs } from "expo-router";
-import { TamaguiProvider } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
-import tamaguiConfig from "../tamagui.config";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme as useAppTheme } from "../src/store/ThemeContext";
 import { BibleProvider } from "../src/store/BibleContext";
 import { DevotionalProvider } from "../src/store/DevotionalContext";
@@ -68,23 +67,21 @@ function TabLayout() {
 }
 
 function ThemedApp() {
-  const { isDark } = useAppTheme();
-
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme={isDark ? "dark" : "light"}>
-      <BibleProvider>
-        <DevotionalProvider>
-          <TabLayout />
-        </DevotionalProvider>
-      </BibleProvider>
-    </TamaguiProvider>
+    <BibleProvider>
+      <DevotionalProvider>
+        <TabLayout />
+      </DevotionalProvider>
+    </BibleProvider>
   );
 }
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <ThemedApp />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <ThemedApp />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

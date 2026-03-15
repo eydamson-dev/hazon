@@ -4,8 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Replaced Tamagui UI framework with React Native Elements for better Android compatibility
+- Fixed "window.matchMedia is not a function" error on Android
+- Replaced IndexedDB with expo-file-system for Bible storage on mobile (no size limit)
+
 ### Added
-- Devotional list with search - search by title, content, or verse references
+- expo-file-system for large Bible translation storage on mobile
 - Date filter for devotions - filter by exact date using native date picker
 - Removed Calendar tab, replaced with All | Trash tabs
 - Added @react-native-community/datetimepicker for native date picking
