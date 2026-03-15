@@ -305,40 +305,25 @@ export default function Devotional() {
   );
 
   const renderDateFilterModal = () => {
-    if (Platform.OS === 'web') {
+    const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
+    
+    if (isNative) {
+      // For Android and iOS - use native DateTimePicker
       return (
         <Modal visible={showDateFilter} transparent animationType="fade">
           <View style={styles.dateFilterContainer}>
             <View style={styles.dateFilterContent}>
               <Text style={styles.dateFilterTitle}>Filter by Date</Text>
               
-              <View style={styles.webDatePickerContainer}>
-                <Text style={styles.dateFilterLabel}>Select Date</Text>
-                <View style={styles.webDateInputContainer}>
-                  <TouchableOpacity
-                    style={styles.webDateButton}
-                    onPress={() => {
-                      const input = document.querySelector('input[type="date"]') as HTMLInputElement;
-                      if (input) input.showPicker();
-                    }}
-                  >
-                    <Text style={styles.webDateText}>
-                      {tempFilterDate.toLocaleDateString()}
-                    </Text>
-                  </TouchableOpacity>
-                  <input
-                    type="date"
-                    value={tempFilterDate.toISOString().split('T')[0]}
-                    onChange={(e: any) => {
-                      const newDate = new Date(e.target.value);
-                      if (!isNaN(newDate.getTime())) {
-                        setTempFilterDate(newDate);
-                      }
-                    }}
-                    style={styles.hiddenDateInput}
-                  />
-                </View>
-              </View>
+              <DateTimePicker
+                value={tempFilterDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, selectedDate) => {
+                  if (selectedDate) setTempFilterDate(selectedDate);
+                }}
+                style={{ height: Platform.OS === 'ios' ? 200 : 'auto' }}
+              />
               
               <View style={styles.dateFilterButtons}>
                 <TouchableOpacity 
@@ -366,24 +351,77 @@ export default function Devotional() {
       );
     }
 
-    // For Android and iOS - use native DateTimePicker
-    const [tempDate, setTempDate] = useState(filterDate || new Date());
-    
+    // For web - use simple month/year selector
+    const currentYear = tempFilterDate.getFullYear();
+    const currentMonth = tempFilterDate.getMonth();
+    const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
+
     return (
       <Modal visible={showDateFilter} transparent animationType="fade">
         <View style={styles.dateFilterContainer}>
           <View style={styles.dateFilterContent}>
             <Text style={styles.dateFilterTitle}>Filter by Date</Text>
             
-            <DateTimePicker
-              value={tempDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selectedDate) => {
-                if (selectedDate) setTempDate(selectedDate);
-              }}
-              style={{ height: Platform.OS === 'ios' ? 200 : 'auto' }}
-            />
+            <View style={styles.webDatePickerContainer}>
+              <Text style={styles.dateFilterLabel}>Year</Text>
+              <View style={styles.selectorRow}>
+                <TouchableOpacity 
+                  style={styles.selectorButton}
+                  onPress={() => setTempFilterDate(new Date(currentYear - 1, currentMonth, 1))}
+                >
+                  <Text style={styles.selectorButtonText}>◀</Text>
+                </TouchableOpacity>
+                <Text style={styles.selectorValue}>{currentYear}</Text>
+                <TouchableOpacity 
+                  style={styles.selectorButton}
+                  onPress={() => setTempFilterDate(new Date(currentYear + 1, currentMonth, 1))}
+                >
+                  <Text style={styles.selectorButtonText}>▶</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.dateFilterLabel, { marginTop: 16 }]}>Month</Text>
+              <View style={styles.monthGrid}>
+                {MONTHS.map((month, index) => (
+                  <TouchableOpacity
+                    key={month}
+                    style={[
+                      styles.monthButton,
+                      currentMonth === index && styles.monthButtonActive
+                    ]}
+                    onPress={() => setTempFilterDate(new Date(currentYear, index, 1))}
+                  >
+                    <Text style={[
+                      styles.monthButtonText,
+                      currentMonth === index && styles.monthButtonTextActive
+                    ]}>
+                      {month.slice(0, 3)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={[styles.dateFilterLabel, { marginTop: 16 }]}>Day</Text>
+              <View style={styles.dayGrid}>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                  <TouchableOpacity
+                    key={day}
+                    style={[
+                      styles.dayButton,
+                      tempFilterDate.getDate() === day && styles.dayButtonActive
+                    ]}
+                    onPress={() => setTempFilterDate(new Date(currentYear, currentMonth, day))}
+                  >
+                    <Text style={[
+                      styles.dayButtonText,
+                      tempFilterDate.getDate() === day && styles.dayButtonTextActive
+                    ]}>
+                      {day}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
             
             <View style={styles.dateFilterButtons}>
               <TouchableOpacity 
@@ -398,7 +436,7 @@ export default function Devotional() {
               <TouchableOpacity 
                 style={styles.dateFilterApply} 
                 onPress={() => {
-                  setFilterDate(tempDate);
+                  setFilterDate(tempFilterDate);
                   setShowDateFilter(false);
                 }}
               >
@@ -1054,27 +1092,30 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
-  webDateInputContainer: {
+  dayGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     marginTop: 8,
   },
-  webDateButton: {
-    flex: 1,
-    height: 50,
+  dayButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    margin: 3,
+    borderRadius: 6,
     backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
-    borderRadius: 8,
-    justifyContent: 'center',
+    minWidth: 40,
     alignItems: 'center',
   },
-  webDateText: {
-    fontSize: 16,
-    color: isDark ? '#fff' : '#000',
+  dayButtonActive: {
+    backgroundColor: PRIMARY_COLOR,
   },
-  hiddenDateInput: {
-    position: 'absolute',
-    opacity: 0,
-    width: 0,
-    height: 0,
+  dayButtonText: {
+    fontSize: 13,
+    color: isDark ? '#ccc' : '#666',
+  },
+  dayButtonTextActive: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
