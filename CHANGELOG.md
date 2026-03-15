@@ -4,33 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-03-14
-
-### Added
-- Bible API integration (HelloAO.org)
-- Multiple translations support (KJV, BSB, WEB, BBE, Tagalog)
-- Tab system for opening multiple Bible books/chapters simultaneously
-- Verse highlighting with 6 color options (Yellow, Green, Blue, Pink, Orange, Purple)
-- Highlight persistence per book/chapter (saved to AsyncStorage)
-- Copy and share selected verses
-- Horizontally scrollable chapter selector
-- Tab icons in navigation (Bible, Devotional, Search, Settings)
-- Tamagui UI framework integration
-
-### Changed
-- Replaced bottom nav chapter/verse buttons with horizontal chapter scroll
-- Tab bar with scrollable tabs for multiple Bible chapters
-- Move highlight context menu to bottom above chapter selector
-
-### Fixed
-- Verse navigation auto-scroll
-- Tab state persistence on page refresh
-- Chapter scroll position on load
-
-### In Progress
-- Search functionality
-- Paragraph/continuous reading mode
-
 ## [1.2.0] - 2026-03-15
 
 ### Added
@@ -44,6 +17,10 @@ All notable changes to this project will be documented in this file.
 - Updated AGENTS.md with app description and features
 
 ### Fixed
+- **Devotion translation bug** - now saves translation ID/name with verse references
+- When viewing devotions, verse text refreshes to match current translation
+
+## [1.1.0] - 2026-03-14
 
 ### Added
 - Beblia GitHub XML Bible translations (998+ translations available)
@@ -58,7 +35,6 @@ All notable changes to this project will be documented in this file.
 - View devotions in list, calendar, or trash tabs
 - Calendar view shows dots on days with devotions
 - Add/remove verses to existing devotions
-- Add verses to existing devotion or create new from Bible selection
 - Add verses to existing devotion or create new from Bible selection
 - Verse selection toolbar with Copy, Share, Compare, Devotion, Cancel buttons
 - Verse range floating above toolbar
@@ -77,5 +53,4 @@ All notable changes to this project will be documented in this file.
 - Devotional delete button not working (fixed)
 
 ### In Progress
-- Search functionality
 - Paragraph/continuous reading mode

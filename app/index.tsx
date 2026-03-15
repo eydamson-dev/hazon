@@ -1077,6 +1077,7 @@ export default function BibleScreen() {
           currentBook={localCurrentBook}
           currentChapterNum={localChapterNum}
           currentChapter={currentChapter}
+          selectedVersion={selectedVersion}
           onClose={() => {
             setShowCreateDevotionModal(false);
             clearSelection();

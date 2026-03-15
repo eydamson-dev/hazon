@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useTheme } from '../store/ThemeContext';
 import { useDevotional } from '../store/DevotionalContext';
-import type { Book, Chapter } from '../types/bible';
+import type { Book, Chapter, BibleVersion } from '../types/bible';
 import type { VerseRef } from '../types/devotional';
 
 const PRIMARY_COLOR = '#304080';
@@ -12,6 +12,7 @@ interface CreateDevotionModalProps {
   currentBook: Book | null;
   currentChapterNum: number;
   currentChapter: Chapter | null;
+  selectedVersion: BibleVersion;
   onClose: () => void;
 }
 
@@ -20,6 +21,7 @@ export default function CreateDevotionModal({
   currentBook,
   currentChapterNum,
   currentChapter,
+  selectedVersion,
   onClose,
 }: CreateDevotionModalProps) {
   const { isDark } = useTheme();
@@ -51,6 +53,8 @@ export default function CreateDevotionModal({
       chapter: currentChapterNum,
       verses: sortedVerses,
       text: verseContents.join(' '),
+      translationId: selectedVersion.id,
+      translationName: selectedVersion.name,
     });
   }
 

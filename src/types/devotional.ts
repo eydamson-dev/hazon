@@ -4,6 +4,8 @@ export interface VerseRef {
   chapter: number;
   verses: number[];
   text?: string;
+  translationId?: string;
+  translationName?: string;
 }
 
 export interface Devotion {

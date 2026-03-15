@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal } from 'react-native';
+import { useState, useMemo, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { YStack, XStack, Spinner } from 'tamagui';
 import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
+import { useBible } from '../src/store/BibleContext';
 import type { Devotion, VerseRef } from '../src/types/devotional';
 
 const PRIMARY_COLOR = '#304080';
@@ -17,6 +18,7 @@ export default function Devotional() {
   const router = useRouter();
   const { isDark } = useTheme();
   const { devotions, trash, isLoading, deleteDevotion, restoreDevotion, permanentlyDeleteDevotion, emptyTrash, createDevotion, updateDevotion } = useDevotional();
+  const { selectedVersion, books } = useBible();
   
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -25,8 +27,58 @@ export default function Devotional() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editVerseRefs, setEditVerseRefs] = useState<VerseRef[]>([]);
+  const [refreshingVerses, setRefreshingVerses] = useState(false);
 
   const styles = createStyles(isDark);
+
+  const refreshVerseTexts = async () => {
+    if (!selectedDevotion || selectedDevotion.verseRefs.length === 0) return;
+    
+    setRefreshingVerses(true);
+    try {
+      const { getBebliaChapter } = await import('../src/services/bible');
+      const updatedVerseRefs: VerseRef[] = [];
+      
+      for (const verseRef of selectedDevotion.verseRefs) {
+        const bookNumber = parseInt(verseRef.bookId.replace('xml_', ''), 10);
+        const chapterData = await getBebliaChapter(selectedVersion.id, bookNumber, verseRef.chapter);
+        
+        if (chapterData) {
+          const verseTexts: string[] = [];
+          for (const verseNum of verseRef.verses) {
+            const verse = chapterData.chapter.content.find(
+              (c: any) => c.type === 'verse' && c.number === verseNum
+            );
+            if (verse) {
+              const text = verse.content?.map((c: any) => typeof c === 'string' ? c : c.text).join(' ');
+              verseTexts.push(text || '');
+            }
+          }
+          
+          updatedVerseRefs.push({
+            ...verseRef,
+            text: verseTexts.join(' '),
+            translationId: selectedVersion.id,
+            translationName: selectedVersion.name,
+          });
+        } else {
+          updatedVerseRefs.push(verseRef);
+        }
+      }
+      
+      setEditVerseRefs(updatedVerseRefs);
+    } catch (error) {
+      console.error('Error refreshing verse texts:', error);
+    } finally {
+      setRefreshingVerses(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedDevotion && selectedDevotion.verseRefs.length > 0) {
+      refreshVerseTexts();
+    }
+  }, [selectedVersion.id, selectedDevotion?.id]);
 
   const devotionDates = useMemo(() => {
     const dates = new Set<string>();
@@ -176,7 +228,10 @@ export default function Devotional() {
         <Text style={styles.devotionContent} numberOfLines={2}>{devotion.content}</Text>
         {devotion.verseRefs.length > 0 && (
           <Text style={styles.devotionVerseRefs}>
-            {devotion.verseRefs.map(v => `${v.bookName} ${v.chapter}:${v.verses.join(',')}`).join(' | ')}
+            {devotion.verseRefs.map(v => {
+              const translationLabel = v.translationName ? `(${v.translationName}) ` : '';
+              return `${translationLabel}${v.bookName} ${v.chapter}:${v.verses.join(',')}`;
+            }).join(' | ')}
           </Text>
         )}
       </TouchableOpacity>
@@ -256,12 +311,18 @@ export default function Devotional() {
             editVerseRefs.map((v, i) => (
               <View key={i} style={styles.verseRefBox}>
                 <View style={styles.verseRefRow}>
-                  <Text style={styles.verseRefText}>{v.bookName} {v.chapter}:{v.verses.join(',')}</Text>
+                  <Text style={styles.verseRefText}>
+                    {v.translationName ? `(${v.translationName}) ` : ''}{v.bookName} {v.chapter}:{v.verses.join(',')}
+                  </Text>
                   <TouchableOpacity onPress={() => handleRemoveVerse(i)}>
                     <Text style={styles.removeVerseButton}>✕</Text>
                   </TouchableOpacity>
                 </View>
-                {v.text && <Text style={styles.verseText}>{v.text}</Text>}
+                {refreshingVerses ? (
+                  <ActivityIndicator size="small" color={PRIMARY_COLOR} style={styles.verseLoading} />
+                ) : (
+                  v.text && <Text style={styles.verseText}>{v.text}</Text>
+                )}
               </View>
             ))
           ) : (
@@ -695,6 +756,9 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     color: isDark ? '#ccc' : '#333',
     fontStyle: 'italic',
     marginTop: 4,
+  },
+  verseLoading: {
+    marginTop: 8,
   },
   saveButtonFull: {
     backgroundColor: PRIMARY_COLOR,
