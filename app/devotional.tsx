@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
 import { useBible } from '../src/store/BibleContext';
@@ -16,6 +16,7 @@ type ViewMode = 'list' | 'trash';
 
 export default function Devotional() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ verses?: string }>();
   const { isDark } = useTheme();
   const { devotions, trash, isLoading, deleteDevotion, restoreDevotion, permanentlyDeleteDevotion, emptyTrash, createDevotion, updateDevotion } = useDevotional();
   const { selectedVersion, books } = useBible();
@@ -33,7 +34,24 @@ export default function Devotional() {
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [tempFilterDate, setTempFilterDate] = useState(filterDate || new Date());
 
+  const pendingVersesFromNav: VerseRef[] = useMemo(() => {
+    if (params.verses) {
+      try {
+        return JSON.parse(params.verses);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }, [params.verses]);
+
   const styles = createStyles(isDark);
+
+  useEffect(() => {
+    if (pendingVersesFromNav.length > 0) {
+      setShowCreateModal(true);
+    }
+  }, [pendingVersesFromNav]);
 
   const refreshVerseTexts = async () => {
     if (!selectedDevotion || selectedDevotion.verseRefs.length === 0) return;
@@ -234,7 +252,7 @@ export default function Devotional() {
           <Text style={styles.createModalTitle}>New Devotion</Text>
           <View style={{ width: 60 }} />
         </View>
-        <CreateDevotionForm onClose={() => setShowCreateModal(false)} />
+        <CreateDevotionForm onClose={() => setShowCreateModal(false)} pendingVerses={pendingVersesFromNav} />
       </View>
     </Modal>
   );
@@ -546,7 +564,7 @@ export default function Devotional() {
   );
 }
 
-function CreateDevotionForm({ onClose }: { onClose: () => void }) {
+function CreateDevotionForm({ onClose, pendingVerses }: { onClose: () => void; pendingVerses?: VerseRef[] }) {
   const { isDark } = useTheme();
   const { createDevotion } = useDevotional();
   const [title, setTitle] = useState('');
@@ -567,7 +585,8 @@ function CreateDevotionForm({ onClose }: { onClose: () => void }) {
 
     setIsSaving(true);
     try {
-      const success = await createDevotion(title.trim(), content.trim(), []);
+      const versesToSave = pendingVerses || [];
+      const success = await createDevotion(title.trim(), content.trim(), versesToSave);
       if (success) {
         onClose();
       } else {
@@ -582,6 +601,20 @@ function CreateDevotionForm({ onClose }: { onClose: () => void }) {
 
   return (
     <ScrollView style={styles.editForm}>
+      {pendingVerses && pendingVerses.length > 0 && (
+        <>
+          <Text style={styles.inputLabel}>Selected Verses</Text>
+          {pendingVerses && pendingVerses.map((verseRef, index) => (
+            <View key={index} style={styles.verseRefBox}>
+              <Text style={styles.verseRefText}>
+                {verseRef.translationName ? `(${verseRef.translationName}) ` : ''}
+                {verseRef.bookName} {verseRef.chapter}:{verseRef.verses.join(',')}
+              </Text>
+              {verseRef.text && <Text style={styles.verseText}>{verseRef.text}</Text>}
+            </View>
+          ))}
+        </>
+      )}
       <Text style={styles.inputLabel}>Title</Text>
       <TextInput
         style={styles.input}

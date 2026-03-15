@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../store/ThemeContext';
 import { useDevotional } from '../store/DevotionalContext';
 import type { Book, Chapter, BibleVersion } from '../types/bible';
-import type { VerseRef } from '../types/devotional';
+import type { VerseRef, Devotion } from '../types/devotional';
 
 const PRIMARY_COLOR = '#304080';
 
@@ -24,11 +25,10 @@ export default function CreateDevotionModal({
   selectedVersion,
   onClose,
 }: CreateDevotionModalProps) {
+  const router = useRouter();
   const { isDark } = useTheme();
-  const { createDevotion } = useDevotional();
+  const { devotions, updateDevotion } = useDevotional();
   
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const verseRefs: VerseRef[] = [];
@@ -58,29 +58,35 @@ export default function CreateDevotionModal({
     });
   }
 
-  const handleSave = async () => {
-    if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a title');
-      return;
-    }
-    if (!content.trim()) {
-      Alert.alert('Error', 'Please enter your reflection');
-      return;
-    }
-
+  const handleAddToDevotion = async (devotion: Devotion) => {
     setIsSaving(true);
     try {
-      const success = await createDevotion(title.trim(), content.trim(), verseRefs);
+      const mergedVerseRefs = [...devotion.verseRefs, ...verseRefs];
+      const success = await updateDevotion(
+        devotion.id,
+        devotion.title,
+        devotion.content,
+        mergedVerseRefs
+      );
       if (success) {
         onClose();
       } else {
-        Alert.alert('Error', 'Failed to save devotion');
+        Alert.alert('Error', 'Failed to add verses to devotion');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to save devotion');
+      Alert.alert('Error', 'Failed to add verses to devotion');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCreateNew = () => {
+    const versesParam = JSON.stringify(verseRefs);
+    onClose();
+    router.push({
+      pathname: '/devotional',
+      params: { verses: versesParam }
+    });
   };
 
   const styles = createStyles(isDark);
@@ -89,51 +95,53 @@ export default function CreateDevotionModal({
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose}>
-          <Text style={styles.cancelButton}>Cancel</Text>
+          <Text style={styles.cancelButton}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Devotion</Text>
-        <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-          <Text style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}>
-            {isSaving ? 'Saving...' : 'Save'}
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Add to Devotion</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.content}>
         {verseRefs.length > 0 && (
           <View style={styles.verseSection}>
-            <Text style={styles.sectionLabel}>Selected Verses</Text>
+            <Text style={styles.sectionLabel}>Selected</Text>
             <View style={styles.verseRef}>
               <Text style={styles.verseRefText}>
                 {currentBook?.commonName} {currentChapterNum}:{Array.from(selectedVerses).sort((a, b) => a - b).join(', ')}
               </Text>
             </View>
-            {verseRefs[0].text && (
-              <Text style={styles.verseText}>{verseRefs[0].text}</Text>
-            )}
           </View>
         )}
 
-        <Text style={styles.sectionLabel}>Title</Text>
-        <TextInput
-          style={styles.input}
-          value={title}
-          onChangeText={setTitle}
-          placeholder="Enter devotion title..."
-          placeholderTextColor={isDark ? '#666' : '#999'}
-        />
+        <TouchableOpacity
+          style={styles.createNewButton}
+          onPress={handleCreateNew}
+        >
+          <Text style={styles.createNewButtonText}>+ Create New Devotion</Text>
+        </TouchableOpacity>
 
-        <Text style={styles.sectionLabel}>Reflection</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={content}
-          onChangeText={setContent}
-          placeholder="Write your reflection..."
-          placeholderTextColor={isDark ? '#666' : '#999'}
-          multiline
-          numberOfLines={8}
-          textAlignVertical="top"
-        />
+        {devotions.length === 0 ? (
+          <Text style={styles.emptyText}>No existing devotions</Text>
+        ) : (
+          <>
+            <Text style={styles.sectionLabel}>Or tap to add to existing:</Text>
+            {devotions.map((devotion) => (
+              <TouchableOpacity
+                key={devotion.id}
+                style={styles.devotionItem}
+                onPress={() => handleAddToDevotion(devotion)}
+                disabled={isSaving}
+              >
+                <Text style={styles.devotionItemTitle} numberOfLines={1}>
+                  {devotion.title}
+                </Text>
+                <Text style={styles.devotionItemDate}>
+                  {new Date(devotion.createdAt).toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -161,14 +169,6 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 16,
     color: isDark ? '#888' : '#666',
   },
-  saveButton: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: PRIMARY_COLOR,
-  },
-  saveButtonDisabled: {
-    color: isDark ? '#444' : '#ccc',
-  },
   content: {
     flex: 1,
     padding: 16,
@@ -194,21 +194,38 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
     color: PRIMARY_COLOR,
   },
-  verseText: {
-    fontSize: 14,
-    color: isDark ? '#ccc' : '#333',
-    fontStyle: 'italic',
-    lineHeight: 20,
-  },
-  input: {
-    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+  createNewButton: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingVertical: 14,
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: isDark ? '#fff' : '#000',
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  textArea: {
-    minHeight: 150,
-    paddingTop: 12,
+  createNewButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  emptyText: {
+    color: isDark ? '#666' : '#999',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  devotionItem: {
+    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  devotionItemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: isDark ? '#fff' : '#000',
+    marginBottom: 4,
+  },
+  devotionItemDate: {
+    fontSize: 12,
+    color: isDark ? '#888' : '#666',
   },
 });

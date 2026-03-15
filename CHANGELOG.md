@@ -9,9 +9,11 @@ All notable changes to this project will be documented in this file.
 - Fixed "window.matchMedia is not a function" error on Android
 - Replaced IndexedDB with expo-file-system for Bible storage on mobile (no size limit)
 - Fixed verse selection context menu layout on mobile
+- Simplified "Add to Devotion" flow - tap existing devotion to add verses directly
 
 ### Added
 - expo-file-system for large Bible translation storage on mobile
+- Add verses to existing devotionals from verse context menu
 - Date filter for devotions - filter by exact date using native date picker
 - Removed Calendar tab, replaced with All | Trash tabs
 - Added @react-native-community/datetimepicker for native date picking
