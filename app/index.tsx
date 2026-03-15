@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Alert, Clipboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { YStack, XStack, Spinner } from 'tamagui';
@@ -34,6 +34,7 @@ const HIGHLIGHT_COLORS = [
 
 export default function BibleScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ bookId?: string; chapter?: string; verse?: string }>();
   const { isDark } = useTheme();
   const {
     selectedVersion,
@@ -89,6 +90,43 @@ export default function BibleScreen() {
     };
     loadHighlights();
   }, []);
+
+  useEffect(() => {
+    if (params.bookId && params.chapter && books.length > 0) {
+      const book = books.find(b => b.id === params.bookId);
+      if (book) {
+        const chapterNum = parseInt(params.chapter, 10);
+        const verseNum = params.verse ? parseInt(params.verse, 10) : 1;
+        
+        setLocalCurrentBook(book);
+        setLocalCurrentVerse(verseNum);
+        setLocalChapterNum(chapterNum);
+        setCurrentBook(book);
+        setCurrentChapterNum(chapterNum);
+        
+        setTabs(prev => {
+          if (prev.length === 0) {
+            const newTab: Tab = {
+              id: `${book.id}-${chapterNum}`,
+              book,
+              chapterNum,
+              currentVerse: verseNum,
+              selectedVerses: new Set(),
+            };
+            return [newTab];
+          }
+          return prev.map(t => ({
+            ...t,
+            book,
+            chapterNum,
+            currentVerse: verseNum,
+          }));
+        });
+        
+        loadChapter(book.id, chapterNum);
+      }
+    }
+  }, [params.bookId, params.chapter, params.verse, books]);
 
   useEffect(() => {
     const loadTabs = async () => {

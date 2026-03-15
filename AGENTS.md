@@ -122,9 +122,7 @@ pnpm run lint
 - [x] IndexedDB storage for translations
 - [x] Compare translations feature
 - [x] Download Bible versions for offline
-
-### In Progress
-- Search functionality
+- [x] Search functionality
 
 ### Pending
 - Bookmarks/favorites

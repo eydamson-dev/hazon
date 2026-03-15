@@ -389,6 +389,63 @@ export async function getBebliaBooks(translationId: string): Promise<Book[]> {
   }
 }
 
+export interface SearchResult {
+  translationId: string;
+  translationName: string;
+  bookId: string;
+  bookName: string;
+  chapter: number;
+  verse: number;
+  text: string;
+}
+
+export async function searchBible(
+  translationId: string,
+  query: string,
+  maxResults: number = 50
+): Promise<SearchResult[]> {
+  if (!query || query.trim().length < 2) {
+    return [];
+  }
+
+  const results: SearchResult[] = [];
+  const searchTerm = query.toLowerCase().trim();
+
+  try {
+    const parsed = await getFromIDB(translationId);
+    if (!parsed) return [];
+
+    for (const testament of parsed.testament) {
+      for (const book of testament.books) {
+        for (const chapter of book.chapters) {
+          for (const verse of chapter.verses) {
+            if (verse.content.toLowerCase().includes(searchTerm)) {
+              const bookInfo = BOOK_NAME_MAP[book.number] || { name: book.name, commonName: book.name };
+              results.push({
+                translationId,
+                translationName: parsed.translation,
+                bookId: `xml_${book.number}`,
+                bookName: bookInfo.commonName,
+                chapter: chapter.number,
+                verse: verse.number,
+                text: verse.content,
+              });
+
+              if (results.length >= maxResults) {
+                return results;
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error searching Bible:', error);
+  }
+
+  return results;
+}
+
 export async function getBebliaChapter(
   translationId: string,
   bookNumber: number,
