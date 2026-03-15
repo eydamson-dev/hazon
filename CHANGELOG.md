@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Replaced Tamagui UI framework with React Native Elements for better Android compatibility
 - Fixed "window.matchMedia is not a function" error on Android
 - Replaced IndexedDB with expo-file-system for Bible storage on mobile (no size limit)
+- Fixed verse selection context menu layout on mobile
 
 ### Added
 - expo-file-system for large Bible translation storage on mobile

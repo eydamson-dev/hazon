@@ -1319,9 +1319,15 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
     marginBottom: 4,
+    overflow: 'hidden',
+    height: 32,
+    justifyContent: 'center',
   },
   verseRangeAboveDark: {
     backgroundColor: 'rgba(30, 30, 30, 0.95)',
+    overflow: 'hidden',
+    height: 32,
+    justifyContent: 'center',
   },
   verseRangeScroll: {
     flex: 1,
