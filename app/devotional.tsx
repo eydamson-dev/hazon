@@ -12,6 +12,32 @@ const PRIMARY_COLOR = '#304080';
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+function groupSequentialVerses(verses: number[]): number[][] {
+  if (verses.length === 0) return [];
+  const sorted = [...verses].sort((a, b) => a - b);
+  const groups: number[][] = [];
+  let currentGroup: number[] = [sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === currentGroup[currentGroup.length - 1] + 1) {
+      currentGroup.push(sorted[i]);
+    } else {
+      groups.push(currentGroup);
+      currentGroup = [sorted[i]];
+    }
+  }
+  groups.push(currentGroup);
+  return groups;
+}
+
+function formatVerseRange(verses: number[]): string {
+  if (verses.length === 0) return '';
+  if (verses.length === 1) return verses[0].toString();
+  
+  const groups = groupSequentialVerses(verses);
+  return groups.map(g => g.length === 1 ? g[0].toString() : `${g[0]}-${g[g.length - 1]}`).join(', ');
+}
+
 type ViewMode = 'list' | 'trash';
 
 export default function Devotional() {
@@ -29,6 +55,7 @@ export default function Devotional() {
   const [editContent, setEditContent] = useState('');
   const [editVerseRefs, setEditVerseRefs] = useState<VerseRef[]>([]);
   const [refreshingVerses, setRefreshingVerses] = useState(false);
+  const [verseTextsCache, setVerseTextsCache] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [showDateFilter, setShowDateFilter] = useState(false);
@@ -60,6 +87,7 @@ export default function Devotional() {
     try {
       const { getBebliaChapter } = await import('../src/services/bible');
       const updatedVerseRefs: VerseRef[] = [];
+      const newCache: Record<string, string> = {};
       
       for (const verseRef of selectedDevotion.verseRefs) {
         const bookNumber = parseInt(verseRef.bookId.replace('xml_', ''), 10);
@@ -74,6 +102,7 @@ export default function Devotional() {
             if (verse) {
               const text = verse.content?.map((c: any) => typeof c === 'string' ? c : c.text).join(' ');
               verseTexts.push(text || '');
+              newCache[`${verseRef.bookId}-${verseRef.chapter}-${verseNum}`] = text || '';
             }
           }
           
@@ -89,6 +118,7 @@ export default function Devotional() {
       }
       
       setEditVerseRefs(updatedVerseRefs);
+      setVerseTextsCache(prev => ({ ...prev, ...newCache }));
     } catch (error) {
       console.error('Error refreshing verse texts:', error);
     } finally {
@@ -215,12 +245,38 @@ export default function Devotional() {
         </View>
         <Text style={styles.devotionContent} numberOfLines={2}>{devotion.content}</Text>
         {devotion.verseRefs.length > 0 && (
-          <Text style={styles.devotionVerseRefs}>
-            {devotion.verseRefs.map(v => {
-              const translationLabel = v.translationName ? `(${v.translationName}) ` : '';
-              return `${translationLabel}${v.bookName} ${v.chapter}:${v.verses.join(',')}`;
-            }).join(' | ')}
-          </Text>
+          <View style={styles.devotionVerseRefsContainer}>
+            {devotion.verseRefs.map((v, idx) => {
+              const verseGroups = groupSequentialVerses(v.verses);
+              return verseGroups.map((verseGroup, groupIdx) => {
+                const verseLabel = verseGroup.length === 1 
+                  ? verseGroup[0].toString() 
+                  : `${verseGroup[0]}-${verseGroup[verseGroup.length - 1]}`;
+                const key = `${idx}-${groupIdx}`;
+                
+                return (
+                  <TouchableOpacity 
+                    key={key}
+                    onPress={() => {
+                      const bookNumber = parseInt(v.bookId.replace('xml_', ''), 10);
+                      router.push({
+                        pathname: '/',
+                        params: { 
+                          book: bookNumber.toString(),
+                          chapter: v.chapter.toString(),
+                          verse: verseGroup[0].toString()
+                        }
+                      });
+                    }}
+                  >
+                    <Text style={styles.devotionVerseRefs}>
+                      {v.bookName} {v.chapter}:{verseLabel}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              });
+            })}
+          </View>
         )}
       </TouchableOpacity>
       <View style={styles.devotionActions}>
@@ -296,23 +352,50 @@ export default function Devotional() {
             </TouchableOpacity>
           </View>
           {editVerseRefs.length > 0 ? (
-            editVerseRefs.map((v, i) => (
-              <View key={i} style={styles.verseRefBox}>
-                <View style={styles.verseRefRow}>
-                  <Text style={styles.verseRefText}>
-                    {v.translationName ? `(${v.translationName}) ` : ''}{v.bookName} {v.chapter}:{v.verses.join(',')}
-                  </Text>
-                  <TouchableOpacity onPress={() => handleRemoveVerse(i)}>
-                    <Text style={styles.removeVerseButton}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-                {refreshingVerses ? (
-                  <ActivityIndicator size="small" color={PRIMARY_COLOR} style={styles.verseLoading} />
-                ) : (
-                  v.text && <Text style={styles.verseText}>{v.text}</Text>
-                )}
-              </View>
-            ))
+            <>
+              {editVerseRefs.flatMap((v, chapterIndex) => {
+                const verseGroups = groupSequentialVerses(v.verses);
+                return verseGroups.flatMap((verseGroup, groupIndex) => {
+                  return verseGroup.map((verseNum, verseInGroupIdx) => {
+                    const verseKey = `${chapterIndex}-${groupIndex}-${verseInGroupIdx}`;
+                    const verseText = verseTextsCache[`${v.bookId}-${v.chapter}-${verseNum}`] || '';
+                    
+                    return (
+                      <TouchableOpacity 
+                        key={verseKey} 
+                        style={styles.verseRefBox}
+                        onPress={() => {
+                          const bookNumber = parseInt(v.bookId.replace('xml_', ''), 10);
+                          router.push({
+                            pathname: '/',
+                            params: { 
+                              book: bookNumber.toString(),
+                              chapter: v.chapter.toString(),
+                              verse: verseNum.toString()
+                            }
+                          });
+                          setSelectedDevotion(null);
+                        }}
+                      >
+                        <View style={styles.verseRefRow}>
+                          <Text style={styles.verseRefText}>
+                            {v.bookName} {v.chapter}:{verseNum}
+                          </Text>
+                          <TouchableOpacity onPress={() => handleRemoveVerse(chapterIndex)}>
+                            <Text style={styles.removeVerseButton}>✕</Text>
+                          </TouchableOpacity>
+                        </View>
+                        {refreshingVerses ? (
+                          <ActivityIndicator size="small" color={PRIMARY_COLOR} style={styles.verseLoading} />
+                        ) : (
+                          verseText ? <Text style={styles.verseText}>{verseText}</Text> : null
+                        )}
+                      </TouchableOpacity>
+                    );
+                  });
+                });
+              })}
+            </>
           ) : (
             <Text style={styles.noVersesText}>No verses added. Tap "+ Add Verse" to add verses from the Bible.</Text>
           )}
@@ -721,6 +804,12 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     color: isDark ? '#ccc' : '#333',
     lineHeight: 20,
     marginBottom: 8,
+  },
+  devotionVerseRefsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
   },
   devotionVerseRefs: {
     fontSize: 12,

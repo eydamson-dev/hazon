@@ -8,6 +8,24 @@ import type { VerseRef, Devotion } from '../types/devotional';
 
 const PRIMARY_COLOR = '#304080';
 
+function groupSequentialVerses(verses: number[]): number[][] {
+  if (verses.length === 0) return [];
+  const sorted = [...verses].sort((a, b) => a - b);
+  const groups: number[][] = [];
+  let currentGroup: number[] = [sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === currentGroup[currentGroup.length - 1] + 1) {
+      currentGroup.push(sorted[i]);
+    } else {
+      groups.push(currentGroup);
+      currentGroup = [sorted[i]];
+    }
+  }
+  groups.push(currentGroup);
+  return groups;
+}
+
 interface CreateDevotionModalProps {
   selectedVerses: Set<number>;
   currentBook: Book | null;
@@ -105,11 +123,17 @@ export default function CreateDevotionModal({
         {verseRefs.length > 0 && (
           <View style={styles.verseSection}>
             <Text style={styles.sectionLabel}>Selected</Text>
-            <View style={styles.verseRef}>
-              <Text style={styles.verseRefText}>
-                {currentBook?.commonName} {currentChapterNum}:{Array.from(selectedVerses).sort((a, b) => a - b).join(', ')}
-              </Text>
-            </View>
+            {verseRefs.map((v, idx) => {
+              const verseGroups = groupSequentialVerses(v.verses);
+              const formatted = verseGroups.map(g => g.length === 1 ? g[0].toString() : `${g[0]}-${g[g.length - 1]}`).join(', ');
+              return (
+                <View key={idx} style={styles.verseRef}>
+                  <Text style={styles.verseRefText}>
+                    {v.bookName} {v.chapter}:{formatted}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         )}
 
