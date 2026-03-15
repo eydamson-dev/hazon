@@ -38,6 +38,7 @@ All notable changes to this project will be documented in this file.
 - Search results navigate directly to verse when tapped
 - Search requires minimum 2 characters
 - Search displays book, chapter, verse reference with text preview
+- **Search term highlighting** - matching words are highlighted in results
 
 ### Changed
 - Updated AGENTS.md with app description and features
