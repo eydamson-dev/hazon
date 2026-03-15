@@ -1,12 +1,37 @@
 import { useState, useCallback } from "react";
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
-import { YStack, XStack } from "tamagui";
+import { YStack } from "tamagui";
 import { useTheme } from "../src/store/ThemeContext";
 import { useBible } from "../src/store/BibleContext";
 import { searchBible, type SearchResult } from "../src/services/bible";
 import { useRouter } from "expo-router";
 
 const PRIMARY_COLOR = '#304080';
+
+function HighlightedText({ text, highlight, textStyle, highlightStyle }: { 
+  text: string; 
+  highlight: string;
+  textStyle: object;
+  highlightStyle: object;
+}) {
+  if (!highlight) {
+    return <Text style={textStyle}>{text}</Text>;
+  }
+  
+  const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+  
+  return (
+    <Text style={textStyle} numberOfLines={2}>
+      {parts.map((part, index) => 
+        part.toLowerCase() === highlight.toLowerCase() ? (
+          <Text key={index} style={highlightStyle}>{part}</Text>
+        ) : (
+          part
+        )
+      )}
+    </Text>
+  );
+}
 
 export default function Search() {
   const { isDark } = useTheme();
@@ -61,11 +86,14 @@ export default function Search() {
       <Text style={styles.resultReference}>
         {item.bookName} {item.chapter}:{item.verse}
       </Text>
-      <Text style={styles.resultText} numberOfLines={2}>
-        {item.text}
-      </Text>
+      <HighlightedText 
+        text={item.text} 
+        highlight={query}
+        textStyle={styles.resultText}
+        highlightStyle={styles.highlight}
+      />
     </TouchableOpacity>
-  ), [styles, handleResultPress]);
+  ), [styles, handleResultPress, query]);
 
   return (
     <YStack style={styles.container} flex={1}>
@@ -158,6 +186,11 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     fontSize: 14,
     color: isDark ? '#ccc' : '#666',
     lineHeight: 20,
+  },
+  highlight: {
+    backgroundColor: '#FFF59D',
+    color: '#000',
+    fontWeight: 'bold',
   },
   noResults: {
     flex: 1,
