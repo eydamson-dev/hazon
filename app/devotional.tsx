@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
 import { useBible } from '../src/store/BibleContext';
@@ -286,12 +287,12 @@ export default function Devotional() {
               <Text style={styles.restoreButton}>Restore</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionButton} onPress={() => handlePermanentDelete(devotion)}>
-              <Text style={styles.deleteButton}>Delete Forever</Text>
+              <Ionicons name="trash-outline" size={20} color="#ff4444" />
             </TouchableOpacity>
           </>
         ) : (
           <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(devotion)}>
-            <Text style={styles.deleteButton}>Delete</Text>
+            <Ionicons name="trash-outline" size={20} color="#ff4444" />
           </TouchableOpacity>
         )}
       </View>
