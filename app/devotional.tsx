@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { YStack, XStack, Spinner } from 'tamagui';
 import { useTheme } from '../src/store/ThemeContext';
@@ -12,7 +13,7 @@ const PRIMARY_COLOR = '#304080';
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-type ViewMode = 'list' | 'calendar' | 'trash';
+type ViewMode = 'list' | 'trash';
 
 export default function Devotional() {
   const router = useRouter();
@@ -28,6 +29,10 @@ export default function Devotional() {
   const [editContent, setEditContent] = useState('');
   const [editVerseRefs, setEditVerseRefs] = useState<VerseRef[]>([]);
   const [refreshingVerses, setRefreshingVerses] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDate, setFilterDate] = useState<Date | null>(null);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [tempFilterDate, setTempFilterDate] = useState(filterDate || new Date());
 
   const styles = createStyles(isDark);
 
@@ -88,6 +93,33 @@ export default function Devotional() {
     return dates;
   }, [devotions]);
 
+  const filteredDevotions = useMemo(() => {
+    let result = devotions;
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(d => {
+        const titleMatch = d.title.toLowerCase().includes(query);
+        const contentMatch = d.content.toLowerCase().includes(query);
+        const verseMatch = d.verseRefs.some(v => 
+          v.bookName.toLowerCase().includes(query) ||
+          `${v.chapter}`.includes(query) ||
+          v.verses.some(vn => `${vn}`.includes(query))
+        );
+        return titleMatch || contentMatch || verseMatch;
+      });
+    }
+    
+    if (filterDate) {
+      const filterDateStr = filterDate.toISOString().split('T')[0];
+      result = result.filter(d => {
+        return d.createdAt.split('T')[0] === filterDateStr;
+      });
+    }
+    
+    return result;
+  }, [devotions, searchQuery, filterDate]);
+
   const getDevotionsForDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
     return devotions.filter(d => d.createdAt.split('T')[0] === dateStr);
@@ -143,67 +175,6 @@ export default function Devotional() {
   const handleAddVerse = () => {
     setSelectedDevotion(null);
     router.push('/');
-  };
-
-  const renderCalendar = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = new Date().toISOString().split('T')[0];
-
-    const days: (number | null)[] = [];
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
-    }
-
-    return (
-      <View style={styles.calendarContainer}>
-        <View style={styles.calendarHeader}>
-          <TouchableOpacity onPress={() => setCurrentDate(new Date(year, month - 1, 1))}>
-            <Text style={styles.calendarNav}>{'<'}</Text>
-          </TouchableOpacity>
-          <Text style={styles.calendarTitle}>{MONTHS[month]} {year}</Text>
-          <TouchableOpacity onPress={() => setCurrentDate(new Date(year, month + 1, 1))}>
-            <Text style={styles.calendarNav}>{'>'}</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.calendarDays}>
-          {DAYS.map(day => (
-            <Text key={day} style={styles.calendarDayName}>{day}</Text>
-          ))}
-        </View>
-        <View style={styles.calendarGrid}>
-          {days.map((day, index) => {
-            if (day === null) return <View key={index} style={styles.calendarDay} />;
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const hasDevotion = devotionDates.has(dateStr);
-            const isToday = dateStr === today;
-            const dayDevotions = getDevotionsForDate(new Date(year, month, day));
-            
-            return (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.calendarDay,
-                  hasDevotion && styles.calendarDayHasDevotion,
-                  isToday && styles.calendarDayToday,
-                ]}
-                onPress={() => dayDevotions.length > 0 && dayDevotions[0] && setSelectedDevotion(dayDevotions[0])}
-              >
-                <Text style={[styles.calendarDayText, hasDevotion && styles.calendarDayTextActive]}>
-                  {day}
-                </Text>
-                {hasDevotion && <View style={styles.calendarDot} />}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-    );
   };
 
   const renderDevotionCard = (devotion: Devotion, isTrash: boolean = false) => (
@@ -333,6 +304,113 @@ export default function Devotional() {
     </Modal>
   );
 
+  const renderDateFilterModal = () => {
+    if (Platform.OS === 'web') {
+      return (
+        <Modal visible={showDateFilter} transparent animationType="fade">
+          <View style={styles.dateFilterContainer}>
+            <View style={styles.dateFilterContent}>
+              <Text style={styles.dateFilterTitle}>Filter by Date</Text>
+              
+              <View style={styles.webDatePickerContainer}>
+                <Text style={styles.dateFilterLabel}>Select Date</Text>
+                <View style={styles.webDateInputContainer}>
+                  <TouchableOpacity
+                    style={styles.webDateButton}
+                    onPress={() => {
+                      const input = document.querySelector('input[type="date"]') as HTMLInputElement;
+                      if (input) input.showPicker();
+                    }}
+                  >
+                    <Text style={styles.webDateText}>
+                      {tempFilterDate.toLocaleDateString()}
+                    </Text>
+                  </TouchableOpacity>
+                  <input
+                    type="date"
+                    value={tempFilterDate.toISOString().split('T')[0]}
+                    onChange={(e: any) => {
+                      const newDate = new Date(e.target.value);
+                      if (!isNaN(newDate.getTime())) {
+                        setTempFilterDate(newDate);
+                      }
+                    }}
+                    style={styles.hiddenDateInput}
+                  />
+                </View>
+              </View>
+              
+              <View style={styles.dateFilterButtons}>
+                <TouchableOpacity 
+                  style={styles.dateFilterCancel} 
+                  onPress={() => {
+                    setShowDateFilter(false);
+                    setFilterDate(null);
+                  }}
+                >
+                  <Text style={styles.dateFilterCancelText}>Clear</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.dateFilterApply} 
+                  onPress={() => {
+                    setFilterDate(tempFilterDate);
+                    setShowDateFilter(false);
+                  }}
+                >
+                  <Text style={styles.dateFilterApplyText}>Apply</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      );
+    }
+
+    // For Android and iOS - use native DateTimePicker
+    const [tempDate, setTempDate] = useState(filterDate || new Date());
+    
+    return (
+      <Modal visible={showDateFilter} transparent animationType="fade">
+        <View style={styles.dateFilterContainer}>
+          <View style={styles.dateFilterContent}>
+            <Text style={styles.dateFilterTitle}>Filter by Date</Text>
+            
+            <DateTimePicker
+              value={tempDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, selectedDate) => {
+                if (selectedDate) setTempDate(selectedDate);
+              }}
+              style={{ height: Platform.OS === 'ios' ? 200 : 'auto' }}
+            />
+            
+            <View style={styles.dateFilterButtons}>
+              <TouchableOpacity 
+                style={styles.dateFilterCancel} 
+                onPress={() => {
+                  setShowDateFilter(false);
+                  setFilterDate(null);
+                }}
+              >
+                <Text style={styles.dateFilterCancelText}>Clear</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.dateFilterApply} 
+                onPress={() => {
+                  setFilterDate(tempDate);
+                  setShowDateFilter(false);
+                }}
+              >
+                <Text style={styles.dateFilterApplyText}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   if (isLoading) {
     return (
       <YStack style={styles.container} flex={1} justifyContent="center" alignItems="center">
@@ -345,15 +423,43 @@ export default function Devotional() {
     <YStack style={styles.container} flex={1}>
       <View style={styles.tabs}>
         <TouchableOpacity style={[styles.tab, viewMode === 'list' && styles.tabActive]} onPress={() => setViewMode('list')}>
-          <Text style={[styles.tabText, viewMode === 'list' && styles.tabTextActive]}>List</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, viewMode === 'calendar' && styles.tabActive]} onPress={() => setViewMode('calendar')}>
-          <Text style={[styles.tabText, viewMode === 'calendar' && styles.tabTextActive]}>Calendar</Text>
+          <Text style={[styles.tabText, viewMode === 'list' && styles.tabTextActive]}>All</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, viewMode === 'trash' && styles.tabActive]} onPress={() => setViewMode('trash')}>
           <Text style={[styles.tabText, viewMode === 'trash' && styles.tabTextActive]}>Trash {trash.length > 0 && `(${trash.length})`}</Text>
         </TouchableOpacity>
       </View>
+
+      {viewMode === 'list' && (
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search devotions..."
+            placeholderTextColor={isDark ? '#666' : '#999'}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          <TouchableOpacity 
+            style={[styles.filterButton, filterDate && styles.filterButtonActive]} 
+            onPress={() => setShowDateFilter(true)}
+          >
+            <Text style={[styles.filterButtonText, filterDate && styles.filterButtonTextActive]}>
+              📅
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {filterDate && viewMode === 'list' && (
+        <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {filterDate.toLocaleDateString()}
+          </Text>
+          <TouchableOpacity onPress={() => setFilterDate(null)}>
+            <Text style={styles.clearFilter}>✕ Clear</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.content}>
         {viewMode === 'list' && (
@@ -363,13 +469,16 @@ export default function Devotional() {
                 <Text style={styles.emptyText}>No devotions yet</Text>
                 <Text style={styles.emptySubtext}>Tap + to create your first devotion</Text>
               </View>
+            ) : filteredDevotions.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No results found</Text>
+                <Text style={styles.emptySubtext}>Try a different search or clear filters</Text>
+              </View>
             ) : (
-              devotions.map(d => renderDevotionCard(d))
+              filteredDevotions.map(d => renderDevotionCard(d))
             )}
           </ScrollView>
         )}
-
-        {viewMode === 'calendar' && renderCalendar()}
 
         {viewMode === 'trash' && (
           <ScrollView>
@@ -395,6 +504,7 @@ export default function Devotional() {
 
       {renderCreateModal()}
       {renderDetailModal()}
+      {renderDateFilterModal()}
     </YStack>
   );
 }
@@ -772,5 +882,199 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#333' : '#eee',
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: isDark ? '#fff' : '#000',
+  },
+  filterButton: {
+    marginLeft: 8,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+  },
+  filterButtonActive: {
+    backgroundColor: PRIMARY_COLOR,
+  },
+  filterButtonText: {
+    fontSize: 16,
+  },
+  filterButtonTextActive: {
+    color: '#fff',
+  },
+  filterIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: isDark ? '#1a1a1a' : '#f0f0f0',
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#333' : '#eee',
+  },
+  filterIndicatorText: {
+    fontSize: 13,
+    color: isDark ? '#ccc' : '#666',
+  },
+  clearFilter: {
+    fontSize: 13,
+    color: PRIMARY_COLOR,
+    fontWeight: '600',
+  },
+  dateFilterContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  dateFilterContent: {
+    backgroundColor: isDark ? '#1a1a1a' : '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxWidth: 320,
+  },
+  dateFilterTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: isDark ? '#fff' : '#000',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  dateFilterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  dateFilterLabel: {
+    fontSize: 14,
+    color: isDark ? '#ccc' : '#666',
+  },
+  dateFilterValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: isDark ? '#fff' : '#000',
+  },
+  dateFilterButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  dateFilterCancel: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: isDark ? '#333' : '#eee',
+  },
+  dateFilterCancelText: {
+    fontSize: 14,
+    color: isDark ? '#ccc' : '#666',
+  },
+  dateFilterApply: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: PRIMARY_COLOR,
+  },
+  dateFilterApplyText: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  webDatePickerContainer: {
+    marginVertical: 16,
+  },
+  dateInput: {
+    height: 44,
+    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    color: isDark ? '#fff' : '#000',
+    marginTop: 8,
+  },
+  selectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 8,
+  },
+  selectorButton: {
+    padding: 12,
+  },
+  selectorButtonText: {
+    fontSize: 18,
+    color: PRIMARY_COLOR,
+  },
+  selectorValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: isDark ? '#fff' : '#000',
+    marginHorizontal: 20,
+    minWidth: 60,
+    textAlign: 'center',
+  },
+  monthGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  monthButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    margin: 4,
+    borderRadius: 8,
+    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  monthButtonActive: {
+    backgroundColor: PRIMARY_COLOR,
+  },
+  monthButtonText: {
+    fontSize: 14,
+    color: isDark ? '#ccc' : '#666',
+  },
+  monthButtonTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  webDateInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  webDateButton: {
+    flex: 1,
+    height: 50,
+    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  webDateText: {
+    fontSize: 16,
+    color: isDark ? '#fff' : '#000',
+  },
+  hiddenDateInput: {
+    position: 'absolute',
+    opacity: 0,
+    width: 0,
+    height: 0,
   },
 });
