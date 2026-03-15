@@ -1,4 +1,18 @@
-# AGENTS.md - CJCRSG Bible App
+# CJCRSG Bible App
+
+## About
+
+A React Native/Expo Bible reading application with multiple translations, offline support, and modern UI. Users can read, search, highlight verses, and switch between Bible translations.
+
+## Features
+
+- **Multiple Translations**: KJV, BSB, WEB, BBE, Tagalog (14+ versions available)
+- **Offline Support**: Download translations for offline reading
+- **Verse Highlighting**: Highlight verses with multiple colors (Yellow, Green, Blue, Pink, Orange, Purple)
+- **Copy & Share**: Copy or share selected verses
+- **Reading Progress**: Remembers last reading position
+- **Compare Translations**: View multiple translations side by side
+- **Theme Support**: Light/Dark/System theme modes
 
 ## Important Reminders
 - **Always update CHANGELOG.md** when committing changes to track progress
