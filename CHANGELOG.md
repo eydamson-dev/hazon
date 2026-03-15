@@ -28,8 +28,21 @@ All notable changes to this project will be documented in this file.
 - Chapter scroll position on load
 
 ### In Progress
+- Search functionality
+- Paragraph/continuous reading mode
 
-## [1.1.0] - 2026-03-14
+## [1.2.0] - 2026-03-15
+
+### Added
+- Search functionality - search Bible verses within downloaded translations
+- Search results navigate directly to verse when tapped
+- Search requires minimum 2 characters
+- Search displays book, chapter, verse reference with text preview
+
+### Changed
+- Updated AGENTS.md with app description and features
+
+### Fixed
 
 ### Added
 - Beblia GitHub XML Bible translations (998+ translations available)
