@@ -1,4 +1,4 @@
-# CJCRSG Bible App
+# Hazon
 
 A React Native/Expo Bible reading application with multiple translations, offline support, and modern UI.
 
@@ -17,9 +17,9 @@ A React Native/Expo Bible reading application with multiple translations, offlin
 - **Framework**: React Native with Expo SDK 55
 - **Language**: TypeScript
 - **Routing**: expo-router
-- **UI**: Tamagui
+- **UI**: React Native Elements
 - **Storage**: 
-  - IndexedDB for Bible XML data
+  - expo-file-system (mobile) / IndexedDB (web) for Bible data
   - AsyncStorage for app state
 - **API**: Beblia Holy Bible XML Format
 

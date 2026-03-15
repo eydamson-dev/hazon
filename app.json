@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "CJCRSG Bible",
-    "slug": "cjcrsg-bible-app",
+    "name": "Hazon",
+    "slug": "hazon",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "scheme": "cjcrsg-bible",
+    "scheme": "hazon",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cjcrsg.bibleapp"
+      "bundleIdentifier": "com.hazon.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +23,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.cjcrsg.bibleapp"
+      "package": "com.hazon.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",

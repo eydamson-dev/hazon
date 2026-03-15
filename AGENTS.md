@@ -1,4 +1,4 @@
-# CJCRSG Bible App
+# Hazon
 
 ## About
 
