@@ -211,11 +211,11 @@ git push -u origin feature/my-feature
 - [x] Search functionality
 - [x] Font Size Adjustment - Change verse text size
 - [x] Share devotionals - Share devotional as formatted text
+- [x] Edit date - Allow changing creation date of devotional
 
 ### In Progress
 
 ### Planned Next (Easy Wins)
-- Edit date - Allow changing creation date of devotional
 
 ### Parked
 - Search within chapter - Scroll positioning issue (complex to fix)
