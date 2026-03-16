@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Clickable verse references in devotionals - navigate to verse in Bible
 
 ### Added
+- Edit date - Change creation date when editing a devotional
 - Font Size adjustment - Small, Medium, Large, Extra Large options in Settings
 - expo-file-system for large Bible translation storage on mobile
 - Add verses to existing devotionals from verse context menu
