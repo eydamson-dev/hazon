@@ -124,13 +124,19 @@ pnpm run lint
 - [x] Download Bible versions for offline
 - [x] Search functionality
 
+### In Progress
+- Font Size Adjustment - Adding font size controls in Settings
+
+### Planned Next (Easy Wins)
+- Search within chapter - Find text quickly in current chapter
+- Share devotionals - Share devotional as formatted text
+- Edit date - Allow changing creation date of devotional
+
 ### Pending
 
 #### Bible Reader
-- Bookmarks/Favorites - Save favorite verses for quick access
 - Reading History - List recently read passages
-- Font Size Adjustment - Change verse text size
-- Search within chapter - Find text quickly
+- Bookmarks/Favorites - Save favorite verses for quick access
 - Notes/Annotations - Add personal notes to verses
 - Night mode - Separate blue light reduction mode
 - Reading Goals - Set daily reading targets
@@ -139,9 +145,7 @@ pnpm run lint
 - Bookmarks/favorites
 - Push notifications for daily devotional
 - Categories/Tags - Organize devotions by topics
-- Share devotionals
 - Daily Devotional - Featured devotional on home screen
-- Edit date - Allow changing date of a devotion
 - Verse highlight colors in devotionals
 - Calendar view - Visual calendar showing days with devotions
 - Rich text formatting in reflections
