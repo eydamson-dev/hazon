@@ -125,9 +125,27 @@ pnpm run lint
 - [x] Search functionality
 
 ### Pending
+
+#### Bible Reader
+- Bookmarks/Favorites - Save favorite verses for quick access
+- Reading History - List recently read passages
+- Font Size Adjustment - Change verse text size
+- Search within chapter - Find text quickly
+- Notes/Annotations - Add personal notes to verses
+- Night mode - Separate blue light reduction mode
+- Reading Goals - Set daily reading targets
+
+#### Devotionals
 - Bookmarks/favorites
 - Push notifications for daily devotional
-- More devotional features (categories, sharing)
+- Categories/Tags - Organize devotions by topics
+- Share devotionals
+- Daily Devotional - Featured devotional on home screen
+- Edit date - Allow changing date of a devotion
+- Verse highlight colors in devotionals
+- Calendar view - Visual calendar showing days with devotions
+- Rich text formatting in reflections
+- Multiple translations side-by-side in devotionals
 
 ## Development Notes
 
