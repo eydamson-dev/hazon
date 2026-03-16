@@ -210,11 +210,11 @@ git push -u origin feature/my-feature
 - [x] Download Bible versions for offline
 - [x] Search functionality
 - [x] Font Size Adjustment - Change verse text size
+- [x] Share devotionals - Share devotional as formatted text
 
 ### In Progress
 
 ### Planned Next (Easy Wins)
-- Share devotionals - Share devotional as formatted text
 - Edit date - Allow changing creation date of devotional
 
 ### Parked
