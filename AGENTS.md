@@ -20,6 +20,7 @@ A React Native/Expo Bible reading application with multiple translations, offlin
 - Run typecheck before committing
 - Don't commit until user asks
 - **Inform user before switching solutions** (e.g., storage, APIs, libraries) - never change approaches without informing first
+- **After completing a feature:** Update AGENTS.md todos immediately (move from Planned Next to Completed) and include CHANGELOG changes in the PR commit (not after merge)
 
 ## Project Setup
 
@@ -209,11 +210,11 @@ git push -u origin feature/my-feature
 - [x] Download Bible versions for offline
 - [x] Search functionality
 - [x] Font Size Adjustment - Change verse text size
+- [x] Share devotionals - Share devotional as formatted text
 
 ### In Progress
 
 ### Planned Next (Easy Wins)
-- Share devotionals - Share devotional as formatted text
 - Edit date - Allow changing creation date of devotional
 
 ### Parked

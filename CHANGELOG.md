@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Add verses to existing devotionals from verse context menu
 - Sequential verse grouping in display (e.g., "John 3:1-3, 5, 8-12")
 - Date filter for devotions - filter by exact date using native date picker
+- Share devotionals - Share devotional as formatted text (web & mobile support)
 - Removed Calendar tab, replaced with All | Trash tabs
 - Added @react-native-community/datetimepicker for native date picking
 

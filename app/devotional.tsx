@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform, Share, Clipboard } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -181,6 +181,33 @@ export default function Devotional() {
     }
   };
 
+  const handleShare = async (devotion: Devotion) => {
+    try {
+      const verseRefsText = devotion.verseRefs.length > 0
+        ? `Verse References: ${devotion.verseRefs
+            .map(v => `${v.bookName} ${v.chapter}:${formatVerseRange(v.verses)}`)
+            .join(', ')}\n\n`
+        : '';
+      
+      const text = `${devotion.title}\n\n${new Date(devotion.createdAt).toLocaleDateString()}\n\n${verseRefsText}${devotion.content}`;
+      
+      if (Platform.OS === 'web') {
+        if (navigator.share) {
+          await navigator.share({ text });
+        } else {
+          Clipboard.setString(text);
+          Alert.alert('Copied!', 'Devotional content copied to clipboard');
+        }
+      } else {
+        await Share.share({
+          message: text,
+        });
+      }
+    } catch (error) {
+      console.log('Share error:', error);
+    }
+  };
+
   const handleRestore = async (devotion: Devotion) => {
     const success = await restoreDevotion(devotion.id);
     if (!success) {
@@ -292,9 +319,14 @@ export default function Devotional() {
             </TouchableOpacity>
           </>
         ) : (
-          <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(devotion)}>
-            <Ionicons name="trash-outline" size={20} color="#ff4444" />
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.actionButton} onPress={() => handleShare(devotion)}>
+              <Ionicons name="share-outline" size={20} color={PRIMARY_COLOR} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(devotion)}>
+              <Ionicons name="trash-outline" size={20} color="#ff4444" />
+            </TouchableOpacity>
+          </>
         )}
       </View>
     </View>
@@ -328,7 +360,12 @@ export default function Devotional() {
           </TouchableOpacity>
         </View>
         <ScrollView style={styles.editForm}>
-          <Text style={styles.inputLabel}>Title</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={styles.inputLabel}>Title</Text>
+            <TouchableOpacity onPress={() => selectedDevotion && handleShare(selectedDevotion)}>
+              <Ionicons name="share-outline" size={22} color={PRIMARY_COLOR} />
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={styles.input}
             value={editTitle}
