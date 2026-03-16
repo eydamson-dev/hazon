@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Clickable verse references in devotionals - navigate to verse in Bible
 
 ### Added
+- Font Size adjustment - Small, Medium, Large, Extra Large options in Settings
 - expo-file-system for large Bible translation storage on mobile
 - Add verses to existing devotionals from verse context menu
 - Sequential verse grouping in display (e.g., "John 3:1-3, 5, 8-12")

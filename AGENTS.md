@@ -123,9 +123,9 @@ pnpm run lint
 - [x] Compare translations feature
 - [x] Download Bible versions for offline
 - [x] Search functionality
+- [x] Font Size Adjustment - Change verse text size
 
 ### In Progress
-- Font Size Adjustment - Adding font size controls in Settings
 
 ### Planned Next (Easy Wins)
 - Search within chapter - Find text quickly in current chapter
