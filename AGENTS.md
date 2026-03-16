@@ -20,6 +20,7 @@ A React Native/Expo Bible reading application with multiple translations, offlin
 - Run typecheck before committing
 - Don't commit until user asks
 - **Inform user before switching solutions** (e.g., storage, APIs, libraries) - never change approaches without informing first
+- **After completing a feature:** Update AGENTS.md todos immediately (move from Planned Next to Completed) and include CHANGELOG changes in the PR commit (not after merge)
 
 ## Project Setup
 
