@@ -21,6 +21,10 @@ All notable changes to this project will be documented in this file.
 - Removed Calendar tab, replaced with All | Trash tabs
 - Added @react-native-community/datetimepicker for native date picking
 
+### Refactored
+- Extracted modal components (BookSelector, ChapterSelector, VerseSelector) to separate files
+- Fixed TypeScript any types - replaced with proper VerseContent type
+
 ## [1.2.0] - 2026-03-15
 
 ### Added

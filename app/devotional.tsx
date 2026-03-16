@@ -7,6 +7,7 @@ import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
 import { useBible } from '../src/store/BibleContext';
 import type { Devotion, VerseRef } from '../src/types/devotional';
+import type { VerseContent } from '../src/types/bible';
 
 const PRIMARY_COLOR = '#304080';
 
@@ -98,10 +99,10 @@ export default function Devotional() {
           const verseTexts: string[] = [];
           for (const verseNum of verseRef.verses) {
             const verse = chapterData.chapter.content.find(
-              (c: any) => c.type === 'verse' && c.number === verseNum
+              (c: VerseContent) => c.type === 'verse' && c.number === verseNum
             );
             if (verse) {
-              const text = verse.content?.map((c: any) => typeof c === 'string' ? c : c.text).join(' ');
+              const text = verse.content?.map((c) => typeof c === 'string' ? c : ('text' in c ? c.text : '')).join(' ');
               verseTexts.push(text || '');
               newCache[`${verseRef.bookId}-${verseRef.chapter}-${verseNum}`] = text || '';
             }
