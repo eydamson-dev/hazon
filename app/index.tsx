@@ -34,7 +34,7 @@ const HIGHLIGHT_COLORS = [
 export default function BibleScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ bookId?: string; chapter?: string; verse?: string }>();
-  const { isDark } = useTheme();
+  const { isDark, fontSizeValue } = useTheme();
   const {
     selectedVersion,
     versions,
@@ -544,7 +544,7 @@ export default function BibleScreen() {
   const oldTestament = books.filter((b) => b.order <= 39);
   const newTestament = books.filter((b) => b.order > 39);
 
-  const styles = createStyles(isDark);
+  const styles = createStyles(isDark, fontSizeValue);
 
   const renderBookList = (bookList: Book[], title: string) => (
     <View style={{ padding: 16 }}>
@@ -1087,7 +1087,7 @@ export default function BibleScreen() {
   );
 }
 
-const createStyles = (isDark: boolean) => StyleSheet.create({
+const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: isDark ? '#121212' : '#fff',
@@ -1137,8 +1137,8 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
   },
   verseText: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 26,
+    fontSize: fontSize,
+    lineHeight: fontSize + 10,
     color: isDark ? '#ddd' : '#333',
   },
   verseHighlight: {

@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
-import { getTheme, saveTheme, ThemeMode } from '../services/theme';
+import { getTheme, saveTheme, ThemeMode, getFontSize, saveFontSize, FontSize, FONT_SIZES } from '../services/theme';
 
 interface ThemeContextType {
   theme: ThemeMode;
   isDark: boolean;
+  fontSize: FontSize;
+  fontSizeValue: number;
   setTheme: (theme: ThemeMode) => Promise<void>;
+  setFontSize: (fontSize: FontSize) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -14,6 +17,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
   const [theme, setThemeState] = useState<ThemeMode>('system');
   const [isDark, setIsDark] = useState(false);
+  const [fontSize, setFontSizeState] = useState<FontSize>('medium');
 
   useEffect(() => {
     loadTheme();
@@ -30,6 +34,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const loadTheme = async () => {
     const savedTheme = await getTheme();
     setThemeState(savedTheme);
+    const savedFontSize = await getFontSize();
+    setFontSizeState(savedFontSize);
   };
 
   const setTheme = async (newTheme: ThemeMode) => {
@@ -37,8 +43,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     await saveTheme(newTheme);
   };
 
+  const setFontSize = async (newFontSize: FontSize) => {
+    setFontSizeState(newFontSize);
+    await saveFontSize(newFontSize);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, isDark, setTheme }}>
+    <ThemeContext.Provider value={{ 
+      theme, 
+      isDark, 
+      fontSize,
+      fontSizeValue: FONT_SIZES[fontSize],
+      setTheme,
+      setFontSize,
+    }}>
       {children}
     </ThemeContext.Provider>
   );

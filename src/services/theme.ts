@@ -2,12 +2,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEYS = {
   THEME: 'app_theme',
+  FONT_SIZE: 'app_font_size',
   HIGHLIGHTS: 'bible_highlights',
   TABS: 'bible_tabs',
   ACTIVE_TAB: 'bible_active_tab',
 };
 
 export type ThemeMode = 'light' | 'dark' | 'system';
+
+export type FontSize = 'small' | 'medium' | 'large' | 'extraLarge';
+
+export const FONT_SIZES: Record<FontSize, number> = {
+  small: 14,
+  medium: 16,
+  large: 18,
+  extraLarge: 22,
+};
 
 export async function getTheme(): Promise<ThemeMode> {
   try {
@@ -23,6 +33,23 @@ export async function saveTheme(theme: ThemeMode): Promise<void> {
     await AsyncStorage.setItem(STORAGE_KEYS.THEME, theme);
   } catch (error) {
     console.error('Error saving theme:', error);
+  }
+}
+
+export async function getFontSize(): Promise<FontSize> {
+  try {
+    const saved = await AsyncStorage.getItem(STORAGE_KEYS.FONT_SIZE);
+    return (saved as FontSize) || 'medium';
+  } catch {
+    return 'medium';
+  }
+}
+
+export async function saveFontSize(fontSize: FontSize): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.FONT_SIZE, fontSize);
+  } catch (error) {
+    console.error('Error saving font size:', error);
   }
 }
 

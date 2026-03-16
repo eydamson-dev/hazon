@@ -44,7 +44,7 @@ type ViewMode = 'list' | 'trash';
 export default function Devotional() {
   const router = useRouter();
   const params = useLocalSearchParams<{ verses?: string }>();
-  const { isDark } = useTheme();
+  const { isDark, fontSizeValue } = useTheme();
   const { devotions, trash, isLoading, deleteDevotion, restoreDevotion, permanentlyDeleteDevotion, emptyTrash, createDevotion, updateDevotion } = useDevotional();
   const { selectedVersion, books } = useBible();
   
@@ -73,7 +73,7 @@ export default function Devotional() {
     return [];
   }, [params.verses]);
 
-  const styles = createStyles(isDark);
+  const styles = createStyles(isDark, fontSizeValue);
 
   useEffect(() => {
     if (pendingVersesFromNav.length > 0) {
@@ -649,13 +649,13 @@ export default function Devotional() {
 }
 
 function CreateDevotionForm({ onClose, pendingVerses }: { onClose: () => void; pendingVerses?: VerseRef[] }) {
-  const { isDark } = useTheme();
+  const { isDark, fontSizeValue } = useTheme();
   const { createDevotion } = useDevotional();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const styles = createStyles(isDark);
+  const styles = createStyles(isDark, fontSizeValue);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -725,7 +725,7 @@ function CreateDevotionForm({ onClose, pendingVerses }: { onClose: () => void; p
   );
 }
 
-const createStyles = (isDark: boolean) => StyleSheet.create({
+const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   container: {
     backgroundColor: isDark ? '#121212' : '#fff',
   },
@@ -1022,7 +1022,7 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     color: PRIMARY_COLOR,
   },
   verseText: {
-    fontSize: 14,
+    fontSize: fontSize - 2,
     color: isDark ? '#ccc' : '#333',
     fontStyle: 'italic',
     marginTop: 4,

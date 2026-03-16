@@ -2,14 +2,21 @@ import { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from "react-native";
 import { useRouter } from 'expo-router';
 import { useTheme } from "../src/store/ThemeContext";
-import { ThemeMode } from "../src/services/theme";
+import { ThemeMode, FontSize } from "../src/services/theme";
 import DownloadsScreen from "../src/components/Downloads";
 
 const PRIMARY_COLOR = '#304080';
 
+const FONT_SIZE_OPTIONS: { label: string; value: FontSize; description: string }[] = [
+  { label: 'Small', value: 'small', description: 'Compact text size' },
+  { label: 'Medium', value: 'medium', description: 'Default text size' },
+  { label: 'Large', value: 'large', description: 'Larger text size' },
+  { label: 'Extra Large', value: 'extraLarge', description: 'Maximum text size' },
+];
+
 export default function Settings() {
   const router = useRouter();
-  const { theme, isDark, setTheme } = useTheme();
+  const { theme, isDark, setTheme, fontSize, setFontSize } = useTheme();
   const [showDownloads, setShowDownloads] = useState(false);
 
   const styles = createStyles(isDark);
@@ -49,6 +56,38 @@ export default function Settings() {
               </Text>
             </View>
             {theme === option.value && (
+              <Text style={styles.checkmark}>✓</Text>
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Font Size</Text>
+        
+        {FONT_SIZE_OPTIONS.map((option) => (
+          <TouchableOpacity
+            key={option.value}
+            style={[
+              styles.themeOption,
+              fontSize === option.value && styles.themeOptionSelected,
+            ]}
+            onPress={() => setFontSize(option.value)}
+          >
+            <View>
+              <Text
+                style={[
+                  styles.themeOptionText,
+                  fontSize === option.value && styles.themeOptionTextSelected,
+                ]}
+              >
+                {option.label}
+              </Text>
+              <Text style={styles.themeOptionDesc}>
+                {option.description}
+              </Text>
+            </View>
+            {fontSize === option.value && (
               <Text style={styles.checkmark}>✓</Text>
             )}
           </TouchableOpacity>
