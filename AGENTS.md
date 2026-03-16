@@ -128,13 +128,16 @@ pnpm run lint
 ### In Progress
 
 ### Planned Next (Easy Wins)
-- Search within chapter - Find text quickly in current chapter
 - Share devotionals - Share devotional as formatted text
 - Edit date - Allow changing creation date of devotional
+
+### Parked
+- Search within chapter - Scroll positioning issue (complex to fix)
 
 ### Pending
 
 #### Bible Reader
+- Search within chapter - Scroll positioning issue (complex to fix)
 - Reading History - List recently read passages
 - Bookmarks/Favorites - Save favorite verses for quick access
 - Notes/Annotations - Add personal notes to verses
