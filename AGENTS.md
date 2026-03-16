@@ -96,7 +96,87 @@ pnpm run lint
 - `services/theme.ts` - Theme persistence service
 - `store/BibleContext.tsx` - React Context for Bible state
 - `store/ThemeContext.tsx` - React Context for theme (dark/light/system)
-- `types/bible.ts` - TypeScript types
+- `types/bible.ts` - Bible-related TypeScript types
+- `types/devotional.ts` - Devotional-related TypeScript types
+
+## Git Workflow
+
+### Branch Naming
+- `feature/description` - New features (e.g., `feature/font-size`)
+- `fix/description` - Bug fixes (e.g., `fix/search-scroll`)
+- `enhancement/description` - Enhancements
+
+### Workflow
+- **Always create a new branch** for each feature/fix
+- **Never commit directly to main**
+- **Never auto commit** - wait for user to instruct when to commit
+- **Each PR must have CHANGELOG.md updated** before creating PR
+- Create PR for every change
+- **User will manually approve on GitHub**
+
+### Process
+```bash
+# Create and switch to new branch
+git checkout -b feature/my-feature
+
+# Make changes
+# Run typecheck locally: pnpm run typecheck
+
+# When ready to commit - WAIT for user instruction
+# User will say "commit" or similar
+
+# After user approval:
+git add .
+git commit -m "Description of changes"
+
+# Push branch
+git push -u origin feature/my-feature
+
+# Create PR on GitHub (with CHANGELOG update)
+# User manually approves and merges
+```
+
+### Pre-PR Checklist
+- [ ] Run typecheck: `pnpm run typecheck`
+- [ ] Update CHANGELOG.md with changes
+- [ ] Wait for user to approve commit
+- [ ] Create PR
+
+## Coding Style
+
+### General Principles
+- Keep components small and focused
+- Use functional components with hooks
+- Avoid magic numbers - use constants
+
+### File Naming
+- Components: `PascalCase.tsx` (e.g., `BibleReader.tsx`)
+- Utils/Services: `camelCase.ts` (e.g., `bibleService.ts`)
+- Types: `camelCase.types.ts` or `types/`
+
+### Component Structure
+- Props interface at top
+- useState hooks first
+- useEffect hooks after
+- Helper functions before return
+- JSX at bottom
+
+### State Management
+- Use React Context for global state
+- Use local useState for component state
+
+### Styling
+- Use StyleSheet.create() for React Native
+- Keep styles at bottom of file or in separate file if large
+
+### TypeScript
+- Always define prop types
+- Avoid `any` - use proper types
+
+### Imports
+- React/external first
+- Internal imports second
+- Relative paths for local files
 
 ## Current Todo List
 
