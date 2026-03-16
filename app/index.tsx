@@ -7,8 +7,11 @@ import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
 import { getHighlights, saveHighlights, getTabs, saveTabs, type HighlightData, type TabData } from '../src/services/theme';
 import CreateDevotionModal from '../src/components/CreateDevotionModal';
+import BookSelector from '../src/components/BookSelector';
+import ChapterSelector from '../src/components/ChapterSelector';
+import VerseSelector from '../src/components/VerseSelector';
 import { getBebliaChapter } from '../src/services/bible';
-import type { Book, Chapter } from '../src/types/bible';
+import type { Book, Chapter, VerseContent } from '../src/types/bible';
 
 const PRIMARY_COLOR = '#304080';
 
@@ -531,11 +534,12 @@ export default function BibleScreen() {
     setShowVersionModal(false);
   };
 
-  const renderVerseContent = (content: any[]): string => {
+  const renderVerseContent = (content: VerseContent['content']): string => {
+    if (!content) return '';
     return content
       .map((item) => {
         if (typeof item === 'string') return item;
-        if (item?.text) return item.text;
+        if (item && 'text' in item && typeof item.text === 'string') return item.text;
         return '';
       })
       .join(' ');
@@ -889,90 +893,37 @@ export default function BibleScreen() {
       </View>
 
       <Modal visible={showBookModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Book</Text>
-            <TouchableOpacity onPress={() => setShowBookModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.modalContent}>
-            {renderBookList(oldTestament, 'Old Testament')}
-            {renderBookList(newTestament, 'New Testament')}
-          </ScrollView>
-        </View>
+        <BookSelector
+          books={books}
+          selectedBookId={localCurrentBook?.id}
+          isDark={isDark}
+          onSelect={(book) => {
+            setLocalCurrentBook(book);
+            setLocalChapterNum(1);
+            setShowBookModal(false);
+          }}
+          onClose={() => setShowBookModal(false)}
+        />
       </Modal>
 
       <Modal visible={showChapterModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Chapter</Text>
-            <TouchableOpacity onPress={() => setShowChapterModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.modalContent}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 8 }}>
-              {Array.from({ length: localCurrentBook?.numberOfChapters || 50 }, (_, i) => i + 1).map(
-                (chapter) => (
-                  <TouchableOpacity
-                    key={chapter}
-                    style={[
-                      styles.chapterItem,
-                      localChapterNum === chapter && styles.chapterItemSelected,
-                    ]}
-                    onPress={() => handleChapterSelect(chapter)}
-                  >
-                    <Text
-                      style={[
-                        styles.chapterItemText,
-                        localChapterNum === chapter && styles.chapterItemTextSelected,
-                      ]}
-                    >
-                      {chapter}
-                    </Text>
-                  </TouchableOpacity>
-                )
-              )}
-            </View>
-          </ScrollView>
-        </View>
+        <ChapterSelector
+          book={localCurrentBook}
+          selectedChapter={localChapterNum}
+          isDark={isDark}
+          onSelect={(chapter) => handleChapterSelect(chapter)}
+          onClose={() => setShowChapterModal(false)}
+        />
       </Modal>
 
       <Modal visible={showVerseModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Verse</Text>
-            <TouchableOpacity onPress={() => setShowVerseModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.modalContent}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 8 }}>
-              {Array.from({ length: currentChapter?.chapter?.content?.filter((item) => item.type === 'verse').length || 30 }, (_, i) => i + 1).map(
-                (verse) => (
-                  <TouchableOpacity
-                    key={verse}
-                    style={[
-                      styles.chapterItem,
-                      localCurrentVerse === verse && styles.chapterItemSelected,
-                    ]}
-                    onPress={() => handleVerseSelect(verse)}
-                  >
-                    <Text
-                      style={[
-                        styles.chapterItemText,
-                        localCurrentVerse === verse && styles.chapterItemTextSelected,
-                      ]}
-                    >
-                      {verse}
-                    </Text>
-                  </TouchableOpacity>
-                )
-              )}
-            </View>
-          </ScrollView>
-        </View>
+        <VerseSelector
+          totalVerses={currentChapter?.chapter?.content?.filter((item) => item.type === 'verse').length || 30}
+          selectedVerse={localCurrentVerse}
+          isDark={isDark}
+          onSelect={(verse) => handleVerseSelect(verse)}
+          onClose={() => setShowVerseModal(false)}
+        />
       </Modal>
 
       <Modal visible={showVersionModal} animationType="slide">
@@ -1056,7 +1007,7 @@ export default function BibleScreen() {
                         <View key={verse.number} style={styles.compareVerse}>
                           <Text style={styles.compareVerseNumber}>{verse.number}</Text>
                           <Text style={styles.compareVerseText}>
-                            {verse.content?.map((c: any) => typeof c === 'string' ? c : c.text).join(' ')}
+                            {verse.content?.map((c) => typeof c === 'string' ? c : ('text' in c ? c.text : '')).join(' ')}
                           </Text>
                         </View>
                       ))

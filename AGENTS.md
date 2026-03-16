@@ -101,6 +101,11 @@ pnpm run lint
 
 ## Git Workflow
 
+### Important Reminder
+- **ALWAYS create a new branch BEFORE making any changes**
+- **ALWAYS pull latest from main** before creating the branch
+- **NEVER make changes directly on main branch**
+
 ### Branch Naming
 - `feature/description` - New features (e.g., `feature/font-size`)
 - `fix/description` - Bug fixes (e.g., `fix/search-scroll`)
