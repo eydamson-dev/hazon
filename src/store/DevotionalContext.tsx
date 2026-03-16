@@ -11,7 +11,7 @@ interface DevotionalContextType {
   isLoading: boolean;
   pendingVerses: VerseRef[];
   createDevotion: (title: string, content: string, verseRefs: VerseRef[]) => Promise<boolean>;
-  updateDevotion: (id: string, title: string, content: string, verseRefs: VerseRef[]) => Promise<boolean>;
+  updateDevotion: (id: string, title: string, content: string, verseRefs: VerseRef[], createdAt?: string) => Promise<boolean>;
   deleteDevotion: (id: string) => Promise<boolean>;
   restoreDevotion: (id: string) => Promise<boolean>;
   permanentlyDeleteDevotion: (id: string) => Promise<boolean>;
@@ -98,7 +98,7 @@ export function DevotionalProvider({ children }: { children: ReactNode }) {
     return success;
   };
 
-  const updateDevotion = async (id: string, title: string, content: string, verseRefs: VerseRef[]): Promise<boolean> => {
+  const updateDevotion = async (id: string, title: string, content: string, verseRefs: VerseRef[], createdAt?: string): Promise<boolean> => {
     const existing = devotions.find(d => d.id === id);
     if (!existing) return false;
     
@@ -107,6 +107,7 @@ export function DevotionalProvider({ children }: { children: ReactNode }) {
       title,
       content,
       verseRefs,
+      createdAt: createdAt || existing.createdAt,
       updatedAt: new Date().toISOString(),
     };
     

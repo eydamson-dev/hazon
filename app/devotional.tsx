@@ -56,6 +56,8 @@ export default function Devotional() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editVerseRefs, setEditVerseRefs] = useState<VerseRef[]>([]);
+  const [editDate, setEditDate] = useState<Date>(new Date());
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
   const [refreshingVerses, setRefreshingVerses] = useState(false);
   const [verseTextsCache, setVerseTextsCache] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -234,7 +236,7 @@ export default function Devotional() {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    const success = await updateDevotion(selectedDevotion.id, editTitle.trim(), editContent.trim(), editVerseRefs);
+    const success = await updateDevotion(selectedDevotion.id, editTitle.trim(), editContent.trim(), editVerseRefs, editDate.toISOString());
     if (success) {
       setSelectedDevotion(null);
     } else {
@@ -263,6 +265,7 @@ export default function Devotional() {
           setEditTitle(devotion.title);
           setEditContent(devotion.content);
           setEditVerseRefs([...devotion.verseRefs]);
+          setEditDate(new Date(devotion.createdAt));
         }}
         disabled={isTrash}
       >
@@ -373,6 +376,69 @@ export default function Devotional() {
             placeholder="Enter title..."
             placeholderTextColor={isDark ? '#666' : '#999'}
           />
+          <View style={styles.dateRow}>
+            <Text style={styles.inputLabel}>Date</Text>
+            <TouchableOpacity 
+              style={styles.dateButton}
+              onPress={() => setShowEditDatePicker(true)}
+            >
+              <Text style={styles.dateButtonText}>
+                {editDate.toLocaleDateString()}
+              </Text>
+              <Ionicons name="calendar-outline" size={18} color={PRIMARY_COLOR} />
+            </TouchableOpacity>
+          </View>
+          {showEditDatePicker && (
+            Platform.OS === 'web' ? (
+              <View style={styles.webDatePickerContainer}>
+                <View style={styles.webDatePickerHeader}>
+                  <TouchableOpacity onPress={() => setShowEditDatePicker(false)}>
+                    <Text style={styles.cancelButton}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => {
+                      setShowEditDatePicker(false);
+                    }}
+                  >
+                    <Text style={styles.saveButton}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.calendarGrid}>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                    <TouchableOpacity
+                      key={day}
+                      style={[
+                        styles.dayButton,
+                        editDate.getDate() === day && styles.dayButtonActive
+                      ]}
+                      onPress={() => {
+                        const newDate = new Date(editDate);
+                        newDate.setDate(day);
+                        setEditDate(newDate);
+                      }}
+                    >
+                      <Text style={[
+                        styles.dayButtonText,
+                        editDate.getDate() === day && styles.dayButtonTextActive
+                      ]}>{day}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <DateTimePicker
+                value={editDate}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowEditDatePicker(false);
+                  if (selectedDate) {
+                    setEditDate(selectedDate);
+                  }
+                }}
+              />
+            )
+          )}
           <Text style={styles.inputLabel}>Reflection</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
@@ -1007,6 +1073,25 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     marginBottom: 8,
     marginTop: 16,
   },
+  dateRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+    borderRadius: 8,
+  },
+  dateButtonText: {
+    fontSize: 14,
+    color: isDark ? '#fff' : '#333',
+  },
   input: {
     backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
     borderRadius: 8,
@@ -1195,6 +1280,12 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   },
   webDatePickerContainer: {
     marginVertical: 16,
+  },
+  webDatePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   dateInput: {
     height: 44,
