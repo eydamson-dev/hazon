@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   HIGHLIGHTS: 'bible_highlights',
   TABS: 'bible_tabs',
   ACTIVE_TAB: 'bible_active_tab',
+  NOTES: 'bible_notes',
 };
 
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -101,5 +102,31 @@ export async function saveTabs(tabs: TabData[], activeTabId: string | null): Pro
     }
   } catch (error) {
     console.error('Error saving tabs:', error);
+  }
+}
+
+export interface Note {
+  id: string;
+  content: string;
+  verseRefs: string[];
+  noteRefs: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getNotes(): Promise<Note[]> {
+  try {
+    const saved = await AsyncStorage.getItem(STORAGE_KEYS.NOTES);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveNotes(notes: Note[]): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
+  } catch (error) {
+    console.error('Error saving notes:', error);
   }
 }

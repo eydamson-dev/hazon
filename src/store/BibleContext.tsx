@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getSelectedTranslation, setSelectedTranslation as saveSelectedTranslation, getDownloadedVersions, getReadingState, saveReadingState, downloadBebliaTranslation, getBebliaBooks, getBebliaChapter } from '../services/bible';
 import type { BibleVersion, Book, Chapter } from '../types/bible';
+import { getNotes, saveNotes, Note } from '../services/theme';
 
 interface BibleContextType {
   selectedVersion: BibleVersion;
@@ -9,6 +10,7 @@ interface BibleContextType {
   currentChapter: Chapter | null;
   currentBook: Book | null;
   currentChapterNum: number;
+  notes: Note[];
   isLoading: boolean;
   error: string | null;
   setSelectedVersion: (versionId: string) => Promise<void>;
@@ -17,6 +19,12 @@ interface BibleContextType {
   setCurrentBook: (book: Book | null) => void;
   setCurrentChapterNum: (num: number) => void;
   refreshDownloadedVersions: () => Promise<void>;
+  addNote: (content: string, verseRefs: string[], noteRefs: string[]) => Promise<Note>;
+  updateNote: (id: string, content: string, verseRefs: string[], noteRefs: string[]) => Promise<boolean>;
+  deleteNote: (id: string) => Promise<boolean>;
+  getNotesForVerse: (verseRef: string) => Note[];
+  getNoteById: (id: string) => Note | undefined;
+  refreshNotes: () => Promise<void>;
 }
 
 const BibleContext = createContext<BibleContextType | undefined>(undefined);
@@ -28,11 +36,13 @@ export function BibleProvider({ children }: { children: ReactNode }) {
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [currentBook, setCurrentBook] = useState<Book | null>(null);
   const [currentChapterNum, setCurrentChapterNum] = useState(1);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     refreshDownloadedVersions();
+    refreshNotes();
   }, []);
 
   useEffect(() => {
@@ -57,6 +67,59 @@ export function BibleProvider({ children }: { children: ReactNode }) {
     });
     
     setVersions(newVersions);
+  };
+
+  const refreshNotes = async () => {
+    const loadedNotes = await getNotes();
+    setNotes(loadedNotes);
+  };
+
+  const addNote = async (content: string, verseRefs: string[], noteRefs: string[]): Promise<Note> => {
+    const newNote: Note = {
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      content,
+      verseRefs,
+      noteRefs,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const updatedNotes = [...notes, newNote];
+    await saveNotes(updatedNotes);
+    setNotes(updatedNotes);
+    return newNote;
+  };
+
+  const updateNote = async (id: string, content: string, verseRefs: string[], noteRefs: string[]): Promise<boolean> => {
+    const index = notes.findIndex(n => n.id === id);
+    if (index === -1) return false;
+    
+    const updatedNote: Note = {
+      ...notes[index],
+      content,
+      verseRefs,
+      noteRefs,
+      updatedAt: new Date().toISOString(),
+    };
+    const updatedNotes = [...notes];
+    updatedNotes[index] = updatedNote;
+    await saveNotes(updatedNotes);
+    setNotes(updatedNotes);
+    return true;
+  };
+
+  const deleteNote = async (id: string): Promise<boolean> => {
+    const updatedNotes = notes.filter(n => n.id !== id);
+    await saveNotes(updatedNotes);
+    setNotes(updatedNotes);
+    return true;
+  };
+
+  const getNotesForVerse = (verseRef: string): Note[] => {
+    return notes.filter(n => n.verseRefs.includes(verseRef));
+  };
+
+  const getNoteById = (id: string): Note | undefined => {
+    return notes.find(n => n.id === id);
   };
 
   const loadInitialState = async () => {
@@ -186,6 +249,7 @@ export function BibleProvider({ children }: { children: ReactNode }) {
         currentChapter,
         currentBook,
         currentChapterNum,
+        notes,
         isLoading,
         error,
         setSelectedVersion: setSelectedVersionHandler,
@@ -194,6 +258,12 @@ export function BibleProvider({ children }: { children: ReactNode }) {
         setCurrentBook: handleSetCurrentBook,
         setCurrentChapterNum: handleSetCurrentChapterNum,
         refreshDownloadedVersions,
+        addNote,
+        updateNote,
+        deleteNote,
+        getNotesForVerse,
+        getNoteById,
+        refreshNotes,
       }}
     >
       {children}

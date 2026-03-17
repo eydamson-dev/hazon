@@ -35,8 +35,8 @@ function TabLayout() {
       <Tabs.Screen
         name="devotional"
         options={{
-          title: "Devotional",
-          tabBarLabel: "Devotional",
+          title: "Journal",
+          tabBarLabel: "Journal",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="heart" size={size} color={color} />
           ),
@@ -62,6 +62,8 @@ function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="notes" options={{ href: null }} />
+      <Tabs.Screen name="note" options={{ href: null }} />
     </Tabs>
   );
 }
