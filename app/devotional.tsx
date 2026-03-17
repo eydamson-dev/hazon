@@ -669,9 +669,11 @@ export default function Devotional() {
     <View style={[styles.container, { flex: 1 }]}>
       <View style={styles.sectionTabs}>
         <TouchableOpacity style={[styles.sectionTab, section === 'devotionals' && styles.sectionTabActive]} onPress={() => setSection('devotionals')}>
+          <Ionicons name="heart" size={18} color={section === 'devotionals' ? '#304080' : (isDark ? '#888' : '#666')} style={styles.sectionTabIcon} />
           <Text style={[styles.sectionTabText, section === 'devotionals' && styles.sectionTabTextActive]}>Devotionals</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.sectionTab, section === 'notes' && styles.sectionTabActive]} onPress={() => setSection('notes')}>
+          <Ionicons name="document-text" size={18} color={section === 'notes' ? '#304080' : (isDark ? '#888' : '#666')} style={styles.sectionTabIcon} />
           <Text style={[styles.sectionTabText, section === 'notes' && styles.sectionTabTextActive]}>Notes</Text>
         </TouchableOpacity>
       </View>
@@ -909,10 +911,13 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   },
   sectionTab: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+    gap: 6,
   },
   sectionTabActive: {
     borderBottomColor: PRIMARY_COLOR,
@@ -924,6 +929,9 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   },
   sectionTabTextActive: {
     color: PRIMARY_COLOR,
+  },
+  sectionTabIcon: {
+    marginRight: 4,
   },
   tabs: {
     flexDirection: 'row',

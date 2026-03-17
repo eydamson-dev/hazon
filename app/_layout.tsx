@@ -38,7 +38,7 @@ function TabLayout() {
           title: "Journal",
           tabBarLabel: "Journal",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="heart" size={size} color={color} />
+            <Ionicons name="bookmark-outline" size={size} color={color} />
           ),
         }}
       />
