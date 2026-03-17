@@ -1074,21 +1074,24 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     elevation: 3,
   },
   notePreviewText: {
-    fontSize: fontSize,
+    fontSize: fontSize + 2,
     color: isDark ? '#fff' : '#000',
-    marginBottom: 8,
+    marginBottom: 10,
+    lineHeight: fontSize + 6,
   },
   noteMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 4,
   },
   noteMetaText: {
-    fontSize: 12,
-    color: isDark ? '#888' : '#666',
+    fontSize: 13,
+    color: isDark ? '#aaa' : '#555',
+    fontWeight: '500',
   },
   noteDateText: {
-    fontSize: 12,
-    color: isDark ? '#888' : '#666',
+    fontSize: 13,
+    color: isDark ? '#aaa' : '#555',
   },
   calendarContainer: {
     padding: 16,

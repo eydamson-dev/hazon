@@ -53,6 +53,7 @@ export default function BibleScreen() {
     setCurrentChapterNum,
     notes,
     getNotesForVerse,
+    updateNote,
   } = useBible();
 
   const { createDevotion } = useDevotional();
@@ -77,6 +78,8 @@ export default function BibleScreen() {
   const [notePreviewNotes, setNotePreviewNotes] = useState<Note[]>([]);
   const [showNoteSelector, setShowNoteSelector] = useState(false);
   const [noteSelectorVerse, setNoteSelectorVerse] = useState<number | null>(null);
+  const [showAddToNoteModal, setShowAddToNoteModal] = useState(false);
+  const [pendingVerseRefs, setPendingVerseRefs] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const chapterScrollRef = useRef<ScrollView>(null);
   const versePositionsRef = useRef<{ [key: number]: number }>({});
@@ -499,8 +502,8 @@ export default function BibleScreen() {
 
   const handleAddNoteFromSelection = () => {
     const verseRefs = Array.from(selectedVerses).map(v => getVerseRef(v));
-    router.push(`/note?verseRefs=${JSON.stringify(verseRefs)}`);
-    clearSelection();
+    setPendingVerseRefs(verseRefs);
+    setShowAddToNoteModal(true);
   };
 
   const handleVerseSelect = (verse: number) => {
@@ -812,7 +815,7 @@ export default function BibleScreen() {
               const hasNotes = verseNotes.length > 0;
 
               return (
-                <View key={index}>
+                <View key={index} style={styles.verseWrapper}>
                   <TouchableOpacity
                     style={[
                       styles.verse,
@@ -836,16 +839,18 @@ export default function BibleScreen() {
                     <Text style={[styles.verseText, isSelected && styles.verseTextSelected]}>
                       {renderVerseContent(item.content || [])}
                     </Text>
-                    {hasNotes && (
-                      <TouchableOpacity
-                        style={styles.noteIcon}
-                        onPress={() => handleNotePress(verseNum)}
-                        onLongPress={() => handleNoteLongPress(verseNum)}
-                      >
-                        <Ionicons name="document-text" size={14} color={PRIMARY_COLOR} />
-                      </TouchableOpacity>
-                    )}
                   </TouchableOpacity>
+                  {hasNotes && (
+                    <TouchableOpacity
+                      style={styles.noteIcon}
+                      onPress={() => handleNotePress(verseNum)}
+                      onLongPress={() => handleNoteLongPress(verseNum)}
+                    >
+                      <View style={styles.noteIconContainer}>
+                        <Ionicons name="document-text" size={16} color="#fff" />
+                      </View>
+                    </TouchableOpacity>
+                  )}
                 </View>
               );
             }
@@ -1165,6 +1170,71 @@ export default function BibleScreen() {
           }}
         />
       </Modal>
+
+      <Modal visible={showAddToNoteModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.addToNoteModal, isDark && styles.addToNoteModalDark]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add to Note</Text>
+              <TouchableOpacity onPress={() => {
+                setShowAddToNoteModal(false);
+                clearSelection();
+              }}>
+                <Ionicons name="close" size={24} color={isDark ? '#fff' : '#000'} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.noteList}>
+              <TouchableOpacity
+                style={[styles.noteSelectItem, isDark && styles.noteSelectItemDark]}
+                onPress={() => {
+                  setShowAddToNoteModal(false);
+                  router.push(`/note?verseRefs=${JSON.stringify(pendingVerseRefs)}`);
+                  clearSelection();
+                }}
+              >
+                <Ionicons name="add-circle" size={24} color={PRIMARY_COLOR} />
+                <Text style={[styles.noteSelectText, isDark && styles.noteSelectTextDark]}>Create New Note</Text>
+              </TouchableOpacity>
+              
+              {notes.length === 0 && (
+                <Text style={[styles.emptyNotesText, isDark && styles.emptyNotesTextDark]}>
+                  No existing notes. Create your first note above.
+                </Text>
+              )}
+              
+              {notes.map(note => (
+                <TouchableOpacity
+                  key={note.id}
+                  style={[styles.noteSelectItem, isDark && styles.noteSelectItemDark]}
+                  onPress={() => {
+                    const updatedNote = {
+                      ...note,
+                      verseRefs: [...new Set([...note.verseRefs, ...pendingVerseRefs])],
+                      updatedAt: new Date().toISOString(),
+                    };
+                    updateNote(note.id, updatedNote.content, updatedNote.verseRefs, updatedNote.noteRefs);
+                    setShowAddToNoteModal(false);
+                    clearSelection();
+                    Alert.alert('Success', 'Verses added to note');
+                  }}
+                >
+                  <Ionicons name="document-text" size={20} color={PRIMARY_COLOR} />
+                  <View style={styles.noteSelectContent}>
+                    <Text style={[styles.noteSelectText, isDark && styles.noteSelectTextDark]} numberOfLines={1}>
+                      {note.content}
+                    </Text>
+                    <Text style={[styles.noteSelectMeta, isDark && styles.noteSelectMetaDark]}>
+                      {note.verseRefs.length} verses • {new Date(note.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={isDark ? '#666' : '#999'} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1211,7 +1281,10 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     padding: 8,
     paddingBottom: 20,
     borderRadius: 4,
+  },
+  verseWrapper: {
     position: 'relative',
+    marginBottom: 12,
   },
   verseNumber: {
     width: 30,
@@ -1227,9 +1300,22 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   },
   noteIcon: {
     position: 'absolute',
-    right: 4,
-    bottom: 4,
-    padding: 2,
+    right: 8,
+    bottom: 8,
+    zIndex: 100,
+  },
+  noteIconContainer: {
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   notePreviewOverlay: {
     position: 'absolute',
@@ -1318,6 +1404,68 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: isDark ? '#fff' : '#000',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  addToNoteModal: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    width: '100%',
+    maxHeight: '70%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  addToNoteModalDark: {
+    backgroundColor: '#1a1a1a',
+  },
+  noteList: {
+    maxHeight: 400,
+  },
+  noteSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#333' : '#e0e0e0',
+    gap: 12,
+  },
+  noteSelectItemDark: {
+    borderBottomColor: isDark ? '#333' : '#e0e0e0',
+  },
+  noteSelectContent: {
+    flex: 1,
+  },
+  noteSelectText: {
+    fontSize: 16,
+    color: isDark ? '#fff' : '#000',
+    marginBottom: 4,
+  },
+  noteSelectTextDark: {
+    color: isDark ? '#fff' : '#000',
+  },
+  noteSelectMeta: {
+    fontSize: 13,
+    color: isDark ? '#888' : '#666',
+  },
+  noteSelectMetaDark: {
+    color: isDark ? '#888' : '#666',
+  },
+  emptyNotesText: {
+    textAlign: 'center',
+    padding: 20,
+    color: isDark ? '#888' : '#666',
+    fontSize: 14,
+  },
+  emptyNotesTextDark: {
+    color: isDark ? '#888' : '#666',
   },
   verseHighlight: {
     backgroundColor: isDark ? '#1a2a4a' : '#e8f0ff',
