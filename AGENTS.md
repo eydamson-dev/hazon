@@ -16,6 +16,7 @@ A React Native/Expo Bible reading application with multiple translations, offlin
 
 ## Important Reminders
 - **Always update CHANGELOG.md** when committing changes to track progress
+- **Always update AGENTS.md todos** (move from Planned/In Progress to Completed) after feature completion
 - Use pnpm for package management
 - Run typecheck before committing
 - Don't commit until user asks
@@ -186,6 +187,14 @@ To keep PRs small and reviewable, break features/enhancements into atomic branch
 - **Medium PRs** (50-200 lines): User reviews and approves
 - **Large PRs** (200+ lines): Break into smaller branches
 
+#### **Post-Feature Checklist**
+
+After completing any feature/enhancement:
+- [ ] Update CHANGELOG.md with the change
+- [ ] Update AGENTS.md todos (mark as completed)
+- [ ] Run typecheck
+- [ ] Wait for user approval to commit
+
 ## Coding Style
 
 ### General Principles
@@ -255,6 +264,12 @@ To keep PRs small and reviewable, break features/enhancements into atomic branch
 ### In Progress
 
 ### Planned Next (Easy Wins)
+- [x] Journal icon change - Change tab icon to bookmark-outline, add icons to sub-tabs
+- [ ] Note card styling - Add shadows, increase border radius, better padding
+- [ ] Note typography improvements - Better font sizes and contrast
+- [ ] Note count badge - Show count on verse note icons when > 1
+- [ ] Swipe-to-delete - Add swipe gesture on note cards
+- [ ] Better empty states - Add illustrations to empty lists
 
 ### Parked
 - Search within chapter - Scroll positioning issue (complex to fix)
