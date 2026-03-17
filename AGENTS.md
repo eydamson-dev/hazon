@@ -265,7 +265,7 @@ After completing any feature/enhancement:
 
 ### Planned Next (Easy Wins)
 - [x] Journal icon change - Change tab icon to bookmark-outline, add icons to sub-tabs
-- [ ] Note card styling - Add shadows, increase border radius, better padding
+- [x] Note card styling - Add shadows, increase border radius, better padding
 - [ ] Note typography improvements - Better font sizes and contrast
 - [ ] Note count badge - Show count on verse note icons when > 1
 - [ ] Swipe-to-delete - Add swipe gesture on note cards
