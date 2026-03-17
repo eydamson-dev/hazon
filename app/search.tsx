@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useTheme } from "../src/store/ThemeContext";
 import { useBible } from "../src/store/BibleContext";
+import EmptyState from "../src/components/EmptyState";
 import { searchBible, type SearchResult } from "../src/services/bible";
 import { useRouter } from "expo-router";
 
@@ -115,11 +116,11 @@ export default function Search() {
       </View>
 
       {hasSearched && !isSearching && results.length === 0 && (
-        <View style={styles.noResults}>
-          <Text style={styles.noResultsText}>
-            No results found for "{query}"
-          </Text>
-        </View>
+        <EmptyState
+          icon="search-outline"
+          title="No results found"
+          subtitle={`Try a different search term`}
+        />
       )}
 
       {results.length > 0 && (
@@ -190,17 +191,6 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
     backgroundColor: '#FFF59D',
     color: '#000',
     fontWeight: 'bold',
-  },
-  noResults: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  noResultsText: {
-    fontSize: 16,
-    color: isDark ? '#666' : '#999',
-    textAlign: 'center',
   },
   placeholder: {
     flex: 1,

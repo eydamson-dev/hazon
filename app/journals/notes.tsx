@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/store/ThemeContext';
 import { useBible } from '../../src/store/BibleContext';
+import EmptyState from '../../src/components/EmptyState';
 import type { Note } from '../../src/services/theme';
 
 const PRIMARY_COLOR = '#304080';
@@ -180,11 +181,11 @@ export default function NotesContent() {
         ))}
 
         {sortedNotes.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="document-text-outline" size={64} color={isDark ? '#444' : '#ccc'} />
-            <Text style={styles.emptyText}>No notes yet</Text>
-            <Text style={styles.emptySubtext}>Long-press a verse to add a note</Text>
-          </View>
+          <EmptyState
+            icon="document-text-outline"
+            title="No notes yet"
+            subtitle="Long-press a verse to add a note"
+          />
         )}
       </ScrollView>
 
@@ -223,25 +224,7 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     fontSize: 14,
     color: isDark ? '#666' : '#999',
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-    marginTop: 40,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: isDark ? '#aaa' : '#666',
-    marginTop: 16,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: isDark ? '#666' : '#999',
-    textAlign: 'center',
-    marginTop: 8,
-  },
+
   swipeContainer: {
     marginBottom: 12,
     position: 'relative',
