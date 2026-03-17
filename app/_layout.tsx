@@ -33,7 +33,7 @@ function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="devotional"
+        name="journals"
         options={{
           title: "Journal",
           tabBarLabel: "Journal",
@@ -62,6 +62,7 @@ function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="devotional" options={{ href: null }} />
       <Tabs.Screen name="notes" options={{ href: null }} />
       <Tabs.Screen name="note" options={{ href: null }} />
     </Tabs>
