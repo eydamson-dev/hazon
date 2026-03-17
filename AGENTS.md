@@ -187,13 +187,42 @@ To keep PRs small and reviewable, break features/enhancements into atomic branch
 - **Medium PRs** (50-200 lines): User reviews and approves
 - **Large PRs** (200+ lines): Break into smaller branches
 
+### **Feature Development Workflow**
+
+1. **Create branch** from main:
+   ```bash
+   git checkout main && git pull && git checkout -b enhancement/description
+   ```
+
+2. **Implement changes** - Make the code changes
+
+3. **Run typecheck** - Ensure no TypeScript errors:
+   ```bash
+   pnpm run typecheck
+   ```
+
+4. **Test with user** - Do NOT commit or create PR yet. Let user test the changes first.
+
+5. **Wait for approval** - User reviews and tests, then says "commit" or "proceed"
+
+6. **Update documentation**:
+   - Update CHANGELOG.md with the change
+   - Update AGENTS.md todos (mark as completed)
+
+7. **Commit and create PR**:
+   ```bash
+   git add .
+   git commit -m "Description"
+   git push -u origin branch-name
+   # Then create PR on GitHub
+   ```
+
+8. **User merges** - User manually approves and merges on GitHub
+
 #### **Post-Feature Checklist**
 
 After completing any feature/enhancement:
-- [ ] Update CHANGELOG.md with the change
-- [ ] Update AGENTS.md todos (mark as completed)
-- [ ] Run typecheck
-- [ ] Wait for user approval to commit
+- [ ] Confirm next task with user - Get explicit confirmation before starting next enhancement/feature
 
 ## Coding Style
 
