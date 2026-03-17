@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/store/ThemeContext';
 import { useDevotional } from '../../src/store/DevotionalContext';
 import { useBible } from '../../src/store/BibleContext';
+import EmptyState from '../../src/components/EmptyState';
 import type { Devotion, VerseRef } from '../../src/types/devotional';
 import type { VerseContent } from '../../src/types/bible';
 
@@ -373,15 +374,17 @@ export default function DevotionalsContent() {
         {viewMode === 'list' && (
           <ScrollView>
             {devotions.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No devotions yet</Text>
-                <Text style={styles.emptySubtext}>Tap + to create your first devotion</Text>
-              </View>
+              <EmptyState
+                icon="heart-outline"
+                title="No devotions yet"
+                subtitle="Tap + to create your first devotion"
+              />
             ) : filteredDevotions.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No results found</Text>
-                <Text style={styles.emptySubtext}>Try a different search or clear filters</Text>
-              </View>
+              <EmptyState
+                icon="search-outline"
+                title="No results found"
+                subtitle="Try a different search or clear filters"
+              />
             ) : (
               filteredDevotions.map(d => renderDevotionCard(d))
             )}
@@ -396,9 +399,11 @@ export default function DevotionalsContent() {
               </TouchableOpacity>
             )}
             {trash.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>Trash is empty</Text>
-              </View>
+              <EmptyState
+                icon="trash-outline"
+                title="Trash is empty"
+                subtitle="Deleted devotions will appear here"
+              />
             ) : (
               trash.map(d => renderDevotionCard(d, true))
             )}
@@ -846,23 +851,6 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   },
   content: {
     flex: 1,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: isDark ? '#aaa' : '#666',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: isDark ? '#666' : '#999',
-    textAlign: 'center',
   },
   devotionCard: {
     margin: 16,
