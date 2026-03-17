@@ -180,15 +180,16 @@ function createStyles(isDark: boolean, fontSize: number) {
       elevation: 3,
     },
     noteContent: {
-      fontSize: fontSize,
+      fontSize: fontSize + 2,
       color: isDark ? '#fff' : '#000',
-      lineHeight: 22,
+      lineHeight: fontSize + 6,
       marginBottom: 12,
     },
     noteMeta: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 16,
+      marginTop: 4,
     },
     metaItem: {
       flexDirection: 'row',
@@ -196,12 +197,13 @@ function createStyles(isDark: boolean, fontSize: number) {
       gap: 4,
     },
     metaText: {
-      fontSize: 12,
-      color: isDark ? '#888' : '#666',
+      fontSize: 13,
+      color: isDark ? '#aaa' : '#555',
+      fontWeight: '500',
     },
     dateText: {
-      fontSize: 12,
-      color: isDark ? '#888' : '#666',
+      fontSize: 13,
+      color: isDark ? '#aaa' : '#555',
       marginLeft: 'auto',
     },
     emptyContainer: {
