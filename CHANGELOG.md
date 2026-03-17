@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Clickable verse references in devotionals - navigate to verse in Bible
 
 ### Added
+- Swipe-to-delete on notes - Swipe left to reveal delete action with confirmation
 - Note count badge - Show count badge on verse note icons when > 1 note
 - Note typography improvements - Increased font size, better contrast, improved line height
 - Note card styling improvements - Added shadows, increased border radius to 12px, better padding

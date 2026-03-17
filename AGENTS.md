@@ -297,7 +297,7 @@ After completing any feature/enhancement:
 - [x] Note card styling - Add shadows, increase border radius, better padding
 - [x] Note typography improvements - Better font sizes and contrast
 - [x] Note count badge - Show count on verse note icons when > 1
-- [ ] Swipe-to-delete - Add swipe gesture on note cards
+- [x] Swipe-to-delete - Add swipe gesture on note cards
 - [ ] Better empty states - Add illustrations to empty lists
 
 ### Parked

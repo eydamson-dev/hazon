@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform, Share, Clipboard } from 'react-native';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform, Share, Clipboard, Animated, PanResponder } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,100 @@ import type { Devotion, VerseRef } from '../src/types/devotional';
 import type { VerseContent } from '../src/types/bible';
 
 const PRIMARY_COLOR = '#304080';
+
+function SwipeableNoteCard({ 
+  note, 
+  onPress, 
+  onDelete, 
+  styles,
+  isDark 
+}: { 
+  note: any; 
+  onPress: () => void; 
+  onDelete: () => void;
+  styles: any;
+  isDark: boolean;
+}) {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const [showActions, setShowActions] = useState(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dx < 0) {
+          translateX.setValue(Math.max(gestureState.dx, -100));
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -50) {
+          Animated.spring(translateX, {
+            toValue: -80,
+            useNativeDriver: true,
+          }).start();
+          setShowActions(true);
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
+  const handleDelete = () => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Delete Note\n\nAre you sure you want to delete this note?');
+      if (confirmed) {
+        onDelete();
+      } else {
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+        setShowActions(false);
+      }
+    } else {
+      Alert.alert('Delete Note', 'Are you sure you want to delete this note?', [
+        { text: 'Cancel', style: 'cancel', onPress: () => {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+          setShowActions(false);
+        }},
+        { text: 'Delete', style: 'destructive', onPress: onDelete },
+      ]);
+    }
+  };
+
+  return (
+    <View style={styles.swipeContainer}>
+      <View style={[styles.swipeActions, isDark && styles.swipeActionsDark]}>
+        <TouchableOpacity style={styles.deleteAction} onPress={handleDelete}>
+          <Ionicons name="trash" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+      <Animated.View 
+        style={[styles.noteCard, { transform: [{ translateX }] }]}
+        {...panResponder.panHandlers}
+      >
+        <TouchableOpacity onPress={onPress} style={styles.swipeableInner}>
+          <Text style={styles.notePreviewText} numberOfLines={2}>{note.content}</Text>
+          <View style={styles.noteMeta}>
+            <Text style={styles.noteMetaText}>{note.verseRefs.length} verses</Text>
+            <Text style={styles.noteDateText}>
+              {new Date(note.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+}
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -779,25 +873,14 @@ export default function Devotional() {
               .filter(n => !noteSearchQuery || n.content.toLowerCase().includes(noteSearchQuery.toLowerCase()))
               .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
               .map(note => (
-                <TouchableOpacity
+                <SwipeableNoteCard
                   key={note.id}
-                  style={styles.noteCard}
+                  note={note}
                   onPress={() => router.push(`/note?noteId=${note.id}`)}
-                  onLongPress={() => {
-                    Alert.alert('Delete Note', 'Are you sure?', [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Delete', style: 'destructive', onPress: () => deleteNote(note.id) },
-                    ]);
-                  }}
-                >
-                  <Text style={styles.notePreviewText} numberOfLines={2}>{note.content}</Text>
-                  <View style={styles.noteMeta}>
-                    <Text style={styles.noteMetaText}>{note.verseRefs.length} verses</Text>
-                    <Text style={styles.noteDateText}>
-                      {new Date(note.createdAt).toLocaleDateString()}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                  onDelete={() => deleteNote(note.id)}
+                  styles={styles}
+                  isDark={isDark}
+                />
               ))}
             {notes.length === 0 && (
               <View style={styles.emptyState}>
@@ -1072,6 +1155,40 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  swipeContainer: {
+    marginBottom: 12,
+    position: 'relative',
+  },
+  swipeableInner: {
+    backgroundColor: isDark ? '#2a2a2a' : '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  swipeActions: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 12,
+    width: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ff4444',
+    borderRadius: 12,
+  },
+  swipeActionsDark: {
+    backgroundColor: '#cc0000',
+  },
+  deleteAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
   },
   notePreviewText: {
     fontSize: fontSize + 2,
