@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Clickable verse references in devotionals - navigate to verse in Bible
 
 ### Added
+- Note card styling improvements - Added shadows, increased border radius to 12px, better padding
 - Journal tab icon changed to bookmark-outline with sub-tab icons (heart for Devotionals, document-text for Notes)
 - Notes/Annotations - Add personal notes to Bible verses with linked verses and notes
 - Journal tab - Combined devotionals and notes in one tab
