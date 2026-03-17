@@ -1,109 +1,15 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform, Share, Clipboard, Animated, PanResponder } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, ActivityIndicator, Platform, Share, Clipboard } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../src/store/ThemeContext';
-import { useDevotional } from '../src/store/DevotionalContext';
-import { useBible } from '../src/store/BibleContext';
-import type { Devotion, VerseRef } from '../src/types/devotional';
-import type { VerseContent } from '../src/types/bible';
+import { useTheme } from '../../src/store/ThemeContext';
+import { useDevotional } from '../../src/store/DevotionalContext';
+import { useBible } from '../../src/store/BibleContext';
+import type { Devotion, VerseRef } from '../../src/types/devotional';
+import type { VerseContent } from '../../src/types/bible';
 
 const PRIMARY_COLOR = '#304080';
-
-function SwipeableNoteCard({ 
-  note, 
-  onPress, 
-  onDelete, 
-  styles,
-  isDark 
-}: { 
-  note: any; 
-  onPress: () => void; 
-  onDelete: () => void;
-  styles: any;
-  isDark: boolean;
-}) {
-  const translateX = useRef(new Animated.Value(0)).current;
-  const [showActions, setShowActions] = useState(false);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dx < 0) {
-          translateX.setValue(Math.max(gestureState.dx, -100));
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx < -50) {
-          Animated.spring(translateX, {
-            toValue: -80,
-            useNativeDriver: true,
-          }).start();
-          setShowActions(true);
-        } else {
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-    })
-  ).current;
-
-  const handleDelete = () => {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Delete Note\n\nAre you sure you want to delete this note?');
-      if (confirmed) {
-        onDelete();
-      } else {
-        Animated.spring(translateX, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-        setShowActions(false);
-      }
-    } else {
-      Alert.alert('Delete Note', 'Are you sure you want to delete this note?', [
-        { text: 'Cancel', style: 'cancel', onPress: () => {
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-          setShowActions(false);
-        }},
-        { text: 'Delete', style: 'destructive', onPress: onDelete },
-      ]);
-    }
-  };
-
-  return (
-    <View style={styles.swipeContainer}>
-      <View style={[styles.swipeActions, isDark && styles.swipeActionsDark]}>
-        <TouchableOpacity style={styles.deleteAction} onPress={handleDelete}>
-          <Ionicons name="trash" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
-      <Animated.View 
-        style={[styles.noteCard, { transform: [{ translateX }] }]}
-        {...panResponder.panHandlers}
-      >
-        <TouchableOpacity onPress={onPress} style={styles.swipeableInner}>
-          <Text style={styles.notePreviewText} numberOfLines={2}>{note.content}</Text>
-          <View style={styles.noteMeta}>
-            <Text style={styles.noteMetaText}>{note.verseRefs.length} verses</Text>
-            <Text style={styles.noteDateText}>
-              {new Date(note.createdAt).toLocaleDateString()}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
-    </View>
-  );
-}
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -134,19 +40,14 @@ function formatVerseRange(verses: number[]): string {
   return groups.map(g => g.length === 1 ? g[0].toString() : `${g[0]}-${g[g.length - 1]}`).join(', ');
 }
 
-type ViewMode = 'list' | 'trash';
-type Section = 'devotionals' | 'notes';
-
-export default function Devotional() {
+export default function DevotionalsContent() {
   const router = useRouter();
   const params = useLocalSearchParams<{ verses?: string }>();
   const { isDark, fontSizeValue } = useTheme();
   const { devotions, trash, isLoading, deleteDevotion, restoreDevotion, permanentlyDeleteDevotion, emptyTrash, createDevotion, updateDevotion } = useDevotional();
-  const { selectedVersion, books, notes, deleteNote } = useBible();
+  const { selectedVersion } = useBible();
   
-  const [section, setSection] = useState<Section>('devotionals');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<'list' | 'trash'>('list');
   const [selectedDevotion, setSelectedDevotion] = useState<Devotion | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -157,7 +58,6 @@ export default function Devotional() {
   const [refreshingVerses, setRefreshingVerses] = useState(false);
   const [verseTextsCache, setVerseTextsCache] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [noteSearchQuery, setNoteSearchQuery] = useState('');
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [tempFilterDate, setTempFilterDate] = useState(filterDate || new Date());
@@ -186,7 +86,7 @@ export default function Devotional() {
     
     setRefreshingVerses(true);
     try {
-      const { getBebliaChapter } = await import('../src/services/bible');
+      const { getBebliaChapter } = await import('../../src/services/bible');
       const updatedVerseRefs: VerseRef[] = [];
       const newCache: Record<string, string> = {};
       
@@ -233,14 +133,6 @@ export default function Devotional() {
     }
   }, [selectedVersion.id, selectedDevotion?.id]);
 
-  const devotionDates = useMemo(() => {
-    const dates = new Set<string>();
-    devotions.forEach(d => {
-      dates.add(d.createdAt.split('T')[0]);
-    });
-    return dates;
-  }, [devotions]);
-
   const filteredDevotions = useMemo(() => {
     let result = devotions;
     
@@ -267,11 +159,6 @@ export default function Devotional() {
     
     return result;
   }, [devotions, searchQuery, filterDate]);
-
-  const getDevotionsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return devotions.filter(d => d.createdAt.split('T')[0] === dateStr);
-  };
 
   const handleDelete = async (devotion: Devotion) => {
     const success = await deleteDevotion(devotion.id);
@@ -432,185 +319,285 @@ export default function Devotional() {
     </View>
   );
 
-  const renderCreateModal = () => (
-    <Modal visible={showCreateModal} animationType="slide">
-      <View style={styles.createModalContainer}>
-        <View style={styles.createModalHeader}>
-          <TouchableOpacity onPress={() => setShowCreateModal(false)}>
-            <Text style={styles.cancelButton}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={styles.createModalTitle}>New Devotion</Text>
-          <View style={{ width: 60 }} />
-        </View>
-        <CreateDevotionForm onClose={() => setShowCreateModal(false)} pendingVerses={pendingVersesFromNav} />
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
-    </Modal>
-  );
+    );
+  }
 
-  const renderDetailModal = () => (
-    <Modal visible={!!selectedDevotion} animationType="slide">
-      <View style={styles.createModalContainer}>
-        <View style={styles.createModalHeader}>
-          <TouchableOpacity onPress={() => setSelectedDevotion(null)}>
-            <Text style={styles.cancelButton}>Close</Text>
-          </TouchableOpacity>
-          <Text style={styles.createModalTitle}>Edit Devotion</Text>
-          <TouchableOpacity onPress={handleSaveEdit}>
-            <Text style={styles.saveButton}>Save</Text>
+  return (
+    <View style={styles.container}>
+      <View style={styles.tabs}>
+        <TouchableOpacity style={[styles.tab, viewMode === 'list' && styles.tabActive]} onPress={() => setViewMode('list')}>
+          <Text style={[styles.tabText, viewMode === 'list' && styles.tabTextActive]}>All</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.tab, viewMode === 'trash' && styles.tabActive]} onPress={() => setViewMode('trash')}>
+          <Text style={[styles.tabText, viewMode === 'trash' && styles.tabTextActive]}>Trash {trash.length > 0 && `(${trash.length})`}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {viewMode === 'list' && (
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search devotions..."
+            placeholderTextColor={isDark ? '#666' : '#999'}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          <TouchableOpacity 
+            style={[styles.filterButton, filterDate && styles.filterButtonActive]} 
+            onPress={() => setShowDateFilter(true)}
+          >
+            <Text style={[styles.filterButtonText, filterDate && styles.filterButtonTextActive]}>
+              📅
+            </Text>
           </TouchableOpacity>
         </View>
-        <ScrollView style={styles.editForm}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={styles.inputLabel}>Title</Text>
-            <TouchableOpacity onPress={() => selectedDevotion && handleShare(selectedDevotion)}>
-              <Ionicons name="share-outline" size={22} color={PRIMARY_COLOR} />
-            </TouchableOpacity>
-          </View>
-          <TextInput
-            style={styles.input}
-            value={editTitle}
-            onChangeText={setEditTitle}
-            placeholder="Enter title..."
-            placeholderTextColor={isDark ? '#666' : '#999'}
-          />
-          <View style={styles.dateRow}>
-            <Text style={styles.inputLabel}>Date</Text>
-            <TouchableOpacity 
-              style={styles.dateButton}
-              onPress={() => setShowEditDatePicker(true)}
-            >
-              <Text style={styles.dateButtonText}>
-                {editDate.toLocaleDateString()}
-              </Text>
-              <Ionicons name="calendar-outline" size={18} color={PRIMARY_COLOR} />
-            </TouchableOpacity>
-          </View>
-          {showEditDatePicker && (
-            Platform.OS === 'web' ? (
-              <View style={styles.webDatePickerContainer}>
-                <View style={styles.webDatePickerHeader}>
-                  <TouchableOpacity onPress={() => setShowEditDatePicker(false)}>
-                    <Text style={styles.cancelButton}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    onPress={() => {
-                      setShowEditDatePicker(false);
-                    }}
-                  >
-                    <Text style={styles.saveButton}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.calendarGrid}>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                    <TouchableOpacity
-                      key={day}
-                      style={[
-                        styles.dayButton,
-                        editDate.getDate() === day && styles.dayButtonActive
-                      ]}
-                      onPress={() => {
-                        const newDate = new Date(editDate);
-                        newDate.setDate(day);
-                        setEditDate(newDate);
-                      }}
-                    >
-                      <Text style={[
-                        styles.dayButtonText,
-                        editDate.getDate() === day && styles.dayButtonTextActive
-                      ]}>{day}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+      )}
+
+      {filterDate && viewMode === 'list' && (
+        <View style={styles.filterIndicator}>
+          <Text style={styles.filterIndicatorText}>
+            {filterDate.toLocaleDateString()}
+          </Text>
+          <TouchableOpacity onPress={() => setFilterDate(null)}>
+            <Text style={styles.clearFilter}>✕ Clear</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={styles.content}>
+        {viewMode === 'list' && (
+          <ScrollView>
+            {devotions.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No devotions yet</Text>
+                <Text style={styles.emptySubtext}>Tap + to create your first devotion</Text>
+              </View>
+            ) : filteredDevotions.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No results found</Text>
+                <Text style={styles.emptySubtext}>Try a different search or clear filters</Text>
               </View>
             ) : (
-              <DateTimePicker
-                value={editDate}
-                mode="date"
-                display="default"
-                onChange={(event, selectedDate) => {
-                  setShowEditDatePicker(false);
-                  if (selectedDate) {
-                    setEditDate(selectedDate);
-                  }
-                }}
-              />
-            )
-          )}
-          <Text style={styles.inputLabel}>Reflection</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={editContent}
-            onChangeText={setEditContent}
-            placeholder="Write your reflection..."
-            placeholderTextColor={isDark ? '#666' : '#999'}
-            multiline
-            numberOfLines={10}
-            textAlignVertical="top"
-          />
-          <View style={styles.versesHeader}>
-            <Text style={styles.inputLabel}>Verses</Text>
-            <TouchableOpacity onPress={handleAddVerse}>
-              <Text style={styles.addVerseButton}>+ Add Verse</Text>
-            </TouchableOpacity>
-          </View>
-          {editVerseRefs.length > 0 ? (
-            <>
-              {editVerseRefs.flatMap((v, chapterIndex) => {
-                const verseGroups = groupSequentialVerses(v.verses);
-                return verseGroups.flatMap((verseGroup, groupIndex) => {
-                  return verseGroup.map((verseNum, verseInGroupIdx) => {
-                    const verseKey = `${chapterIndex}-${groupIndex}-${verseInGroupIdx}`;
-                    const verseText = verseTextsCache[`${v.bookId}-${v.chapter}-${verseNum}`] || '';
-                    
-                    return (
-                      <TouchableOpacity 
-                        key={verseKey} 
-                        style={styles.verseRefBox}
-                        onPress={() => {
-                          const bookNumber = parseInt(v.bookId.replace('xml_', ''), 10);
-                          router.push({
-                            pathname: '/',
-                            params: { 
-                              book: bookNumber.toString(),
-                              chapter: v.chapter.toString(),
-                              verse: verseNum.toString()
-                            }
-                          });
-                          setSelectedDevotion(null);
-                        }}
-                      >
-                        <View style={styles.verseRefRow}>
-                          <Text style={styles.verseRefText}>
-                            {v.bookName} {v.chapter}:{verseNum}
-                          </Text>
-                          <TouchableOpacity onPress={() => handleRemoveVerse(chapterIndex)}>
-                            <Text style={styles.removeVerseButton}>✕</Text>
-                          </TouchableOpacity>
-                        </View>
-                        {refreshingVerses ? (
-                          <ActivityIndicator size="small" color={PRIMARY_COLOR} style={styles.verseLoading} />
-                        ) : (
-                          verseText ? <Text style={styles.verseText}>{verseText}</Text> : null
-                        )}
-                      </TouchableOpacity>
-                    );
-                  });
-                });
-              })}
-            </>
-          ) : (
-            <Text style={styles.noVersesText}>No verses added. Tap "+ Add Verse" to add verses from the Bible.</Text>
-          )}
-        </ScrollView>
+              filteredDevotions.map(d => renderDevotionCard(d))
+            )}
+          </ScrollView>
+        )}
+
+        {viewMode === 'trash' && (
+          <ScrollView>
+            {trash.length > 0 && (
+              <TouchableOpacity style={styles.emptyTrashButton} onPress={handleEmptyTrash}>
+                <Text style={styles.emptyTrashText}>Empty Trash</Text>
+              </TouchableOpacity>
+            )}
+            {trash.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>Trash is empty</Text>
+              </View>
+            ) : (
+              trash.map(d => renderDevotionCard(d, true))
+            )}
+          </ScrollView>
+        )}
       </View>
-    </Modal>
+
+      <TouchableOpacity style={styles.fab} onPress={() => setShowCreateModal(true)}>
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+
+      {renderCreateModal()}
+      {renderDetailModal()}
+      {renderDateFilterModal()}
+    </View>
   );
 
-  const renderDateFilterModal = () => {
+  function renderCreateModal() {
+    return (
+      <Modal visible={showCreateModal} animationType="slide">
+        <View style={styles.createModalContainer}>
+          <View style={styles.createModalHeader}>
+            <TouchableOpacity onPress={() => setShowCreateModal(false)}>
+              <Text style={styles.cancelButton}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.createModalTitle}>New Devotion</Text>
+            <View style={{ width: 60 }} />
+          </View>
+          <CreateDevotionForm onClose={() => setShowCreateModal(false)} pendingVerses={pendingVersesFromNav} />
+        </View>
+      </Modal>
+    );
+  }
+
+  function renderDetailModal() {
+    return (
+      <Modal visible={!!selectedDevotion} animationType="slide">
+        <View style={styles.createModalContainer}>
+          <View style={styles.createModalHeader}>
+            <TouchableOpacity onPress={() => setSelectedDevotion(null)}>
+              <Text style={styles.cancelButton}>Close</Text>
+            </TouchableOpacity>
+            <Text style={styles.createModalTitle}>Edit Devotion</Text>
+            <TouchableOpacity onPress={handleSaveEdit}>
+              <Text style={styles.saveButton}>Save</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.editForm}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.inputLabel}>Title</Text>
+              <TouchableOpacity onPress={() => selectedDevotion && handleShare(selectedDevotion)}>
+                <Ionicons name="share-outline" size={22} color={PRIMARY_COLOR} />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={styles.input}
+              value={editTitle}
+              onChangeText={setEditTitle}
+              placeholder="Enter title..."
+              placeholderTextColor={isDark ? '#666' : '#999'}
+            />
+            <View style={styles.dateRow}>
+              <Text style={styles.inputLabel}>Date</Text>
+              <TouchableOpacity 
+                style={styles.dateButton}
+                onPress={() => setShowEditDatePicker(true)}
+              >
+                <Text style={styles.dateButtonText}>
+                  {editDate.toLocaleDateString()}
+                </Text>
+                <Ionicons name="calendar-outline" size={18} color={PRIMARY_COLOR} />
+              </TouchableOpacity>
+            </View>
+            {showEditDatePicker && (
+              Platform.OS === 'web' ? (
+                <View style={styles.webDatePickerContainer}>
+                  <View style={styles.webDatePickerHeader}>
+                    <TouchableOpacity onPress={() => setShowEditDatePicker(false)}>
+                      <Text style={styles.cancelButton}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        setShowEditDatePicker(false);
+                      }}
+                    >
+                      <Text style={styles.saveButton}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.calendarGrid}>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                      <TouchableOpacity
+                        key={day}
+                        style={[
+                          styles.dayButton,
+                          editDate.getDate() === day && styles.dayButtonActive
+                        ]}
+                        onPress={() => {
+                          const newDate = new Date(editDate);
+                          newDate.setDate(day);
+                          setEditDate(newDate);
+                        }}
+                      >
+                        <Text style={[
+                          styles.dayButtonText,
+                          editDate.getDate() === day && styles.dayButtonTextActive
+                        ]}>{day}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                <DateTimePicker
+                  value={editDate}
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowEditDatePicker(false);
+                    if (selectedDate) {
+                      setEditDate(selectedDate);
+                    }
+                  }}
+                />
+              )
+            )}
+            <Text style={styles.inputLabel}>Reflection</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={editContent}
+              onChangeText={setEditContent}
+              placeholder="Write your reflection..."
+              placeholderTextColor={isDark ? '#666' : '#999'}
+              multiline
+              numberOfLines={10}
+              textAlignVertical="top"
+            />
+            <View style={styles.versesHeader}>
+              <Text style={styles.inputLabel}>Verses</Text>
+              <TouchableOpacity onPress={handleAddVerse}>
+                <Text style={styles.addVerseButton}>+ Add Verse</Text>
+              </TouchableOpacity>
+            </View>
+            {editVerseRefs.length > 0 ? (
+              <>
+                {editVerseRefs.flatMap((v, chapterIndex) => {
+                  const verseGroups = groupSequentialVerses(v.verses);
+                  return verseGroups.flatMap((verseGroup, groupIndex) => {
+                    return verseGroup.map((verseNum, verseInGroupIdx) => {
+                      const verseKey = `${chapterIndex}-${groupIndex}-${verseInGroupIdx}`;
+                      const verseText = verseTextsCache[`${v.bookId}-${v.chapter}-${verseNum}`] || '';
+                      
+                      return (
+                        <TouchableOpacity 
+                          key={verseKey} 
+                          style={styles.verseRefBox}
+                          onPress={() => {
+                            const bookNumber = parseInt(v.bookId.replace('xml_', ''), 10);
+                            router.push({
+                              pathname: '/',
+                              params: { 
+                                book: bookNumber.toString(),
+                                chapter: v.chapter.toString(),
+                                verse: verseNum.toString()
+                              }
+                            });
+                            setSelectedDevotion(null);
+                          }}
+                        >
+                          <View style={styles.verseRefRow}>
+                            <Text style={styles.verseRefText}>
+                              {v.bookName} {v.chapter}:{verseNum}
+                            </Text>
+                            <TouchableOpacity onPress={() => handleRemoveVerse(chapterIndex)}>
+                              <Text style={styles.removeVerseButton}>✕</Text>
+                            </TouchableOpacity>
+                          </View>
+                          {refreshingVerses ? (
+                            <ActivityIndicator size="small" color={PRIMARY_COLOR} style={styles.verseLoading} />
+                          ) : (
+                            verseText ? <Text style={styles.verseText}>{verseText}</Text> : null
+                          )}
+                        </TouchableOpacity>
+                      );
+                    });
+                  });
+                })}
+              </>
+            ) : (
+              <Text style={styles.noVersesText}>No verses added. Tap "+ Add Verse" to add verses from the Bible.</Text>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
+    );
+  }
+
+  function renderDateFilterModal() {
     const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
     
     if (isNative) {
-      // For Android and iOS - use native DateTimePicker
       return (
         <Modal visible={showDateFilter} transparent animationType="fade">
           <View style={styles.dateFilterContainer}>
@@ -653,7 +640,6 @@ export default function Devotional() {
       );
     }
 
-    // For web - use simple month/year selector
     const currentYear = tempFilterDate.getFullYear();
     const currentMonth = tempFilterDate.getMonth();
     const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
@@ -749,160 +735,7 @@ export default function Devotional() {
         </View>
       </Modal>
     );
-  };
-
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-      </View>
-    );
   }
-
-  return (
-    <View style={[styles.container, { flex: 1 }]}>
-      <View style={styles.sectionTabs}>
-        <TouchableOpacity style={[styles.sectionTab, section === 'devotionals' && styles.sectionTabActive]} onPress={() => setSection('devotionals')}>
-          <Ionicons name="heart" size={18} color={section === 'devotionals' ? '#304080' : (isDark ? '#888' : '#666')} style={styles.sectionTabIcon} />
-          <Text style={[styles.sectionTabText, section === 'devotionals' && styles.sectionTabTextActive]}>Devotionals</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.sectionTab, section === 'notes' && styles.sectionTabActive]} onPress={() => setSection('notes')}>
-          <Ionicons name="document-text" size={18} color={section === 'notes' ? '#304080' : (isDark ? '#888' : '#666')} style={styles.sectionTabIcon} />
-          <Text style={[styles.sectionTabText, section === 'notes' && styles.sectionTabTextActive]}>Notes</Text>
-        </TouchableOpacity>
-      </View>
-
-      {section === 'devotionals' && (
-        <View>
-          <View style={styles.tabs}>
-            <TouchableOpacity style={[styles.tab, viewMode === 'list' && styles.tabActive]} onPress={() => setViewMode('list')}>
-              <Text style={[styles.tabText, viewMode === 'list' && styles.tabTextActive]}>All</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.tab, viewMode === 'trash' && styles.tabActive]} onPress={() => setViewMode('trash')}>
-              <Text style={[styles.tabText, viewMode === 'trash' && styles.tabTextActive]}>Trash {trash.length > 0 && `(${trash.length})`}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {viewMode === 'list' && (
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search devotions..."
-            placeholderTextColor={isDark ? '#666' : '#999'}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          <TouchableOpacity 
-            style={[styles.filterButton, filterDate && styles.filterButtonActive]} 
-            onPress={() => setShowDateFilter(true)}
-          >
-            <Text style={[styles.filterButtonText, filterDate && styles.filterButtonTextActive]}>
-              📅
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {filterDate && viewMode === 'list' && (
-        <View style={styles.filterIndicator}>
-          <Text style={styles.filterIndicatorText}>
-            {filterDate.toLocaleDateString()}
-          </Text>
-          <TouchableOpacity onPress={() => setFilterDate(null)}>
-            <Text style={styles.clearFilter}>✕ Clear</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      <View style={styles.content}>
-        {viewMode === 'list' && (
-          <ScrollView>
-            {devotions.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No devotions yet</Text>
-                <Text style={styles.emptySubtext}>Tap + to create your first devotion</Text>
-              </View>
-            ) : filteredDevotions.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No results found</Text>
-                <Text style={styles.emptySubtext}>Try a different search or clear filters</Text>
-              </View>
-            ) : (
-              filteredDevotions.map(d => renderDevotionCard(d))
-            )}
-          </ScrollView>
-        )}
-
-        {viewMode === 'trash' && (
-          <ScrollView>
-            {trash.length > 0 && (
-              <TouchableOpacity style={styles.emptyTrashButton} onPress={handleEmptyTrash}>
-                <Text style={styles.emptyTrashText}>Empty Trash</Text>
-              </TouchableOpacity>
-            )}
-            {trash.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>Trash is empty</Text>
-              </View>
-            ) : (
-              trash.map(d => renderDevotionCard(d, true))
-            )}
-          </ScrollView>
-        )}
-      </View>
-
-      <TouchableOpacity style={styles.fab} onPress={() => setShowCreateModal(true)}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
-        </View>
-      )}
-
-      {section === 'notes' && (
-        <View style={styles.content}>
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search notes..."
-              placeholderTextColor={isDark ? '#666' : '#999'}
-              value={noteSearchQuery}
-              onChangeText={setNoteSearchQuery}
-            />
-          </View>
-          <ScrollView>
-            {notes
-              .filter(n => !noteSearchQuery || n.content.toLowerCase().includes(noteSearchQuery.toLowerCase()))
-              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-              .map(note => (
-                <SwipeableNoteCard
-                  key={note.id}
-                  note={note}
-                  onPress={() => router.push(`/note?noteId=${note.id}`)}
-                  onDelete={() => deleteNote(note.id)}
-                  styles={styles}
-                  isDark={isDark}
-                />
-              ))}
-            {notes.length === 0 && (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>No notes yet</Text>
-                <Text style={styles.emptySubtext}>Long-press a verse to add a note</Text>
-              </View>
-            )}
-          </ScrollView>
-          <TouchableOpacity 
-            style={styles.fab} 
-            onPress={() => router.push('/note')}
-          >
-            <Text style={styles.fabText}>+</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {renderCreateModal()}
-      {renderDetailModal()}
-      {renderDateFilterModal()}
-    </View>
-  );
 }
 
 function CreateDevotionForm({ onClose, pendingVerses }: { onClose: () => void; pendingVerses?: VerseRef[] }) {
@@ -984,37 +817,8 @@ function CreateDevotionForm({ onClose, pendingVerses }: { onClose: () => void; p
 
 const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   container: {
-    backgroundColor: isDark ? '#121212' : '#fff',
-  },
-  sectionTabs: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: isDark ? '#333' : '#eee',
-    backgroundColor: isDark ? '#1a1a1a' : '#fff',
-  },
-  sectionTab: {
     flex: 1,
-    flexDirection: 'row',
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-    gap: 6,
-  },
-  sectionTabActive: {
-    borderBottomColor: PRIMARY_COLOR,
-  },
-  sectionTabText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: isDark ? '#888' : '#666',
-  },
-  sectionTabTextActive: {
-    color: PRIMARY_COLOR,
-  },
-  sectionTabIcon: {
-    marginRight: 4,
+    backgroundColor: isDark ? '#121212' : '#fff',
   },
   tabs: {
     flexDirection: 'row',
@@ -1114,11 +918,6 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
   },
-  deleteButton: {
-    color: '#ff4444',
-    fontSize: 14,
-    fontWeight: '500',
-  },
   restoreButton: {
     color: PRIMARY_COLOR,
     fontSize: 14,
@@ -1144,142 +943,6 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     fontSize: 28,
     color: '#fff',
     fontWeight: '300',
-  },
-  noteCard: {
-    backgroundColor: isDark ? '#2a2a2a' : '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  swipeContainer: {
-    marginBottom: 12,
-    position: 'relative',
-  },
-  swipeableInner: {
-    backgroundColor: isDark ? '#2a2a2a' : '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  swipeActions: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 12,
-    width: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ff4444',
-    borderRadius: 12,
-  },
-  swipeActionsDark: {
-    backgroundColor: '#cc0000',
-  },
-  deleteAction: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 80,
-    height: '100%',
-  },
-  notePreviewText: {
-    fontSize: fontSize + 2,
-    color: isDark ? '#fff' : '#000',
-    marginBottom: 10,
-    lineHeight: fontSize + 6,
-  },
-  noteMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  noteMetaText: {
-    fontSize: 13,
-    color: isDark ? '#aaa' : '#555',
-    fontWeight: '500',
-  },
-  noteDateText: {
-    fontSize: 13,
-    color: isDark ? '#aaa' : '#555',
-  },
-  calendarContainer: {
-    padding: 16,
-  },
-  calendarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  calendarNav: {
-    fontSize: 20,
-    color: PRIMARY_COLOR,
-    paddingHorizontal: 16,
-  },
-  calendarTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: isDark ? '#fff' : '#000',
-  },
-  calendarDays: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  calendarDayName: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 12,
-    color: isDark ? '#888' : '#666',
-    fontWeight: '600',
-  },
-  calendarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  calendarDay: {
-    width: '14.28%',
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  calendarDayHasDevotion: {},
-  calendarDayToday: {
-    backgroundColor: PRIMARY_COLOR,
-    borderRadius: 20,
-  },
-  calendarDayText: {
-    fontSize: 14,
-    color: isDark ? '#fff' : '#000',
-  },
-  calendarDayTextActive: {
-    fontWeight: '600',
-  },
-  calendarDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: PRIMARY_COLOR,
-    position: 'absolute',
-    bottom: 4,
-  },
-  emptyTrashButton: {
-    margin: 16,
-    padding: 12,
-    backgroundColor: '#ff4444',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  emptyTrashText: {
-    color: '#fff',
-    fontWeight: '600',
   },
   createModalContainer: {
     flex: 1,
@@ -1485,21 +1148,6 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     textAlign: 'center',
     marginBottom: 16,
   },
-  dateFilterRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  dateFilterLabel: {
-    fontSize: 14,
-    color: isDark ? '#ccc' : '#666',
-  },
-  dateFilterValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: isDark ? '#fff' : '#000',
-  },
   dateFilterButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1534,15 +1182,6 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     paddingHorizontal: 4,
-  },
-  dateInput: {
-    height: 44,
-    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    color: isDark ? '#fff' : '#000',
-    marginTop: 8,
   },
   selectorRow: {
     flexDirection: 'row',
@@ -1616,5 +1255,24 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   dayButtonTextActive: {
     color: '#fff',
     fontWeight: '600',
+  },
+  emptyTrashButton: {
+    margin: 16,
+    padding: 12,
+    backgroundColor: '#ff4444',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  emptyTrashText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  dateFilterLabel: {
+    fontSize: 14,
+    color: isDark ? '#ccc' : '#666',
   },
 });

@@ -289,6 +289,7 @@ After completing any feature/enhancement:
 - [x] Share devotionals - Share devotional as formatted text
 - [x] Edit date - Allow changing creation date of devotional
 - [x] Notes/Annotations - Add personal notes to verses
+- [x] **Refactor: Split devotional.tsx into clean directory structure** - `app/journals/` folder with sub-tabs
 
 ### In Progress
 

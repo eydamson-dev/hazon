@@ -31,6 +31,10 @@ All notable changes to this project will be documented in this file.
 - Added @react-native-community/datetimepicker for native date picking
 
 ### Refactored
+- **Code organization**: Split monolithic devotional.tsx (1620+ lines) into clean directory structure:
+  - `app/journals/` - Main Journal container with Devotionals and Notes sub-tabs
+  - `app/journals/devotionals.tsx` - Devotionals feature (isolated, 900+ lines)
+  - `app/journals/notes.tsx` - Notes feature with swipe-to-delete (isolated, 300+ lines)
 - Extracted modal components (BookSelector, ChapterSelector, VerseSelector) to separate files
 - Fixed TypeScript any types - replaced with proper VerseContent type
 
