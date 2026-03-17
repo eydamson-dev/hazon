@@ -148,6 +148,44 @@ git push -u origin feature/my-feature
 - [ ] Wait for user to approve commit
 - [ ] Create PR
 
+### Feature Branching Strategy
+
+To keep PRs small and reviewable, break features/enhancements into atomic branches:
+
+#### **Branch Types**
+
+| Type | Naming | Scope | PR Size |
+|------|--------|-------|---------|
+| `feature/*` | `feature/notes-annotations` | New features | Medium-Large |
+| `enhancement/*` | `enhancement/journal-icons` | UI improvements | Small-Medium |
+| `fix/*` | `fix/note-id-collision` | Bug fixes | Small |
+
+#### **Atomic Branching Rules**
+
+1. **One concern per branch** - Each branch should address exactly one enhancement or feature
+2. **Quick wins first** - Start with smallest enhancements to build momentum  
+3. **Branch from `main`** - Always branch from latest main:
+   ```bash
+   git checkout main && git pull && git checkout -b enhancement/description
+   ```
+4. **Wait for user approval** - Never commit or merge without explicit user instruction
+5. **Fast-follow PRs** - After user approval, create PR quickly
+
+#### **Enhancement Breakdown Example**
+
+**Bad**: One branch with "All UI improvements"  
+**Good**: Separate branches:
+- `enhancement/journal-icon-change` (5 min work)
+- `enhancement/note-card-styling` (10 min work)  
+- `enhancement/note-typography` (10 min work)
+- `enhancement/note-count-badge` (20 min work)
+
+#### **PR Guidelines**
+
+- **Small PRs** (1-50 lines): Quick to review, user manually approves
+- **Medium PRs** (50-200 lines): User reviews and approves
+- **Large PRs** (200+ lines): Break into smaller branches
+
 ## Coding Style
 
 ### General Principles
