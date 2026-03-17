@@ -17,6 +17,7 @@ A React Native/Expo Bible reading application with multiple translations, offlin
 ## Important Reminders
 - **Always update CHANGELOG.md** when committing changes to track progress
 - **Always update AGENTS.md todos** (move from Planned/In Progress to Completed) after feature completion
+- **Confirm next task with user** - Get explicit confirmation before starting next enhancement/feature
 - Use pnpm for package management
 - Run typecheck before committing
 - Don't commit until user asks
@@ -194,6 +195,7 @@ After completing any feature/enhancement:
 - [ ] Update AGENTS.md todos (mark as completed)
 - [ ] Run typecheck
 - [ ] Wait for user approval to commit
+- [ ] **Confirm next task with user** - Get explicit confirmation before starting next enhancement/feature
 
 ## Coding Style
 
