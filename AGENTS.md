@@ -296,7 +296,7 @@ After completing any feature/enhancement:
 - [x] Journal icon change - Change tab icon to bookmark-outline, add icons to sub-tabs
 - [x] Note card styling - Add shadows, increase border radius, better padding
 - [x] Note typography improvements - Better font sizes and contrast
-- [ ] Note count badge - Show count on verse note icons when > 1
+- [x] Note count badge - Show count on verse note icons when > 1
 - [ ] Swipe-to-delete - Add swipe gesture on note cards
 - [ ] Better empty states - Add illustrations to empty lists
 

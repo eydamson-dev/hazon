@@ -848,6 +848,11 @@ export default function BibleScreen() {
                     >
                       <View style={styles.noteIconContainer}>
                         <Ionicons name="document-text" size={16} color="#fff" />
+                        {verseNotes.length > 1 && (
+                          <View style={styles.noteCountBadge}>
+                            <Text style={styles.noteCountText}>{verseNotes.length}</Text>
+                          </View>
+                        )}
                       </View>
                     </TouchableOpacity>
                   )}
@@ -1316,6 +1321,26 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
+    position: 'relative',
+  },
+  noteCountBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#ff4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  noteCountText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: 4,
   },
   notePreviewOverlay: {
     position: 'absolute',
