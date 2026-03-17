@@ -41,14 +41,16 @@ function formatVerseRange(verses: number[]): string {
 }
 
 type ViewMode = 'list' | 'trash';
+type Section = 'devotionals' | 'notes';
 
 export default function Devotional() {
   const router = useRouter();
   const params = useLocalSearchParams<{ verses?: string }>();
   const { isDark, fontSizeValue } = useTheme();
   const { devotions, trash, isLoading, deleteDevotion, restoreDevotion, permanentlyDeleteDevotion, emptyTrash, createDevotion, updateDevotion } = useDevotional();
-  const { selectedVersion, books } = useBible();
+  const { selectedVersion, books, notes, deleteNote } = useBible();
   
+  const [section, setSection] = useState<Section>('devotionals');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDevotion, setSelectedDevotion] = useState<Devotion | null>(null);
@@ -61,6 +63,7 @@ export default function Devotional() {
   const [refreshingVerses, setRefreshingVerses] = useState(false);
   const [verseTextsCache, setVerseTextsCache] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [noteSearchQuery, setNoteSearchQuery] = useState('');
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [tempFilterDate, setTempFilterDate] = useState(filterDate || new Date());
@@ -664,16 +667,27 @@ export default function Devotional() {
 
   return (
     <View style={[styles.container, { flex: 1 }]}>
-      <View style={styles.tabs}>
-        <TouchableOpacity style={[styles.tab, viewMode === 'list' && styles.tabActive]} onPress={() => setViewMode('list')}>
-          <Text style={[styles.tabText, viewMode === 'list' && styles.tabTextActive]}>All</Text>
+      <View style={styles.sectionTabs}>
+        <TouchableOpacity style={[styles.sectionTab, section === 'devotionals' && styles.sectionTabActive]} onPress={() => setSection('devotionals')}>
+          <Text style={[styles.sectionTabText, section === 'devotionals' && styles.sectionTabTextActive]}>Devotionals</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, viewMode === 'trash' && styles.tabActive]} onPress={() => setViewMode('trash')}>
-          <Text style={[styles.tabText, viewMode === 'trash' && styles.tabTextActive]}>Trash {trash.length > 0 && `(${trash.length})`}</Text>
+        <TouchableOpacity style={[styles.sectionTab, section === 'notes' && styles.sectionTabActive]} onPress={() => setSection('notes')}>
+          <Text style={[styles.sectionTabText, section === 'notes' && styles.sectionTabTextActive]}>Notes</Text>
         </TouchableOpacity>
       </View>
 
-      {viewMode === 'list' && (
+      {section === 'devotionals' && (
+        <View>
+          <View style={styles.tabs}>
+            <TouchableOpacity style={[styles.tab, viewMode === 'list' && styles.tabActive]} onPress={() => setViewMode('list')}>
+              <Text style={[styles.tabText, viewMode === 'list' && styles.tabTextActive]}>All</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.tab, viewMode === 'trash' && styles.tabActive]} onPress={() => setViewMode('trash')}>
+              <Text style={[styles.tabText, viewMode === 'trash' && styles.tabTextActive]}>Trash {trash.length > 0 && `(${trash.length})`}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {viewMode === 'list' && (
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
@@ -744,6 +758,60 @@ export default function Devotional() {
       <TouchableOpacity style={styles.fab} onPress={() => setShowCreateModal(true)}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
+        </View>
+      )}
+
+      {section === 'notes' && (
+        <View style={styles.content}>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search notes..."
+              placeholderTextColor={isDark ? '#666' : '#999'}
+              value={noteSearchQuery}
+              onChangeText={setNoteSearchQuery}
+            />
+          </View>
+          <ScrollView>
+            {notes
+              .filter(n => !noteSearchQuery || n.content.toLowerCase().includes(noteSearchQuery.toLowerCase()))
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .map(note => (
+                <TouchableOpacity
+                  key={note.id}
+                  style={styles.noteCard}
+                  onPress={() => router.push(`/note?noteId=${note.id}`)}
+                  onLongPress={() => {
+                    Alert.alert('Delete Note', 'Are you sure?', [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Delete', style: 'destructive', onPress: () => deleteNote(note.id) },
+                    ]);
+                  }}
+                >
+                  <Text style={styles.notePreviewText} numberOfLines={2}>{note.content}</Text>
+                  <View style={styles.noteMeta}>
+                    <Text style={styles.noteMetaText}>{note.verseRefs.length} verses</Text>
+                    <Text style={styles.noteDateText}>
+                      {new Date(note.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            {notes.length === 0 && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No notes yet</Text>
+                <Text style={styles.emptySubtext}>Long-press a verse to add a note</Text>
+              </View>
+            )}
+          </ScrollView>
+          <TouchableOpacity 
+            style={styles.fab} 
+            onPress={() => router.push('/note')}
+          >
+            <Text style={styles.fabText}>+</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {renderCreateModal()}
       {renderDetailModal()}
@@ -832,6 +900,30 @@ function CreateDevotionForm({ onClose, pendingVerses }: { onClose: () => void; p
 const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   container: {
     backgroundColor: isDark ? '#121212' : '#fff',
+  },
+  sectionTabs: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#333' : '#eee',
+    backgroundColor: isDark ? '#1a1a1a' : '#fff',
+  },
+  sectionTab: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  sectionTabActive: {
+    borderBottomColor: PRIMARY_COLOR,
+  },
+  sectionTabText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: isDark ? '#888' : '#666',
+  },
+  sectionTabTextActive: {
+    color: PRIMARY_COLOR,
   },
   tabs: {
     flexDirection: 'row',
@@ -961,6 +1053,29 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     fontSize: 28,
     color: '#fff',
     fontWeight: '300',
+  },
+  noteCard: {
+    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  notePreviewText: {
+    fontSize: fontSize,
+    color: isDark ? '#fff' : '#000',
+    marginBottom: 8,
+  },
+  noteMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  noteMetaText: {
+    fontSize: 12,
+    color: isDark ? '#888' : '#666',
+  },
+  noteDateText: {
+    fontSize: 12,
+    color: isDark ? '#888' : '#666',
   },
   calendarContainer: {
     padding: 16,

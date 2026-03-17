@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useBible } from '../src/store/BibleContext';
 import { useTheme } from '../src/store/ThemeContext';
 import { useDevotional } from '../src/store/DevotionalContext';
-import { getHighlights, saveHighlights, getTabs, saveTabs, type HighlightData, type TabData } from '../src/services/theme';
+import { getHighlights, saveHighlights, getTabs, saveTabs, type HighlightData, type TabData, type Note } from '../src/services/theme';
 import CreateDevotionModal from '../src/components/CreateDevotionModal';
 import BookSelector from '../src/components/BookSelector';
 import ChapterSelector from '../src/components/ChapterSelector';
@@ -51,6 +51,8 @@ export default function BibleScreen() {
     loadChapter,
     setCurrentBook,
     setCurrentChapterNum,
+    notes,
+    getNotesForVerse,
   } = useBible();
 
   const { createDevotion } = useDevotional();
@@ -71,6 +73,10 @@ export default function BibleScreen() {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareChapters, setCompareChapters] = useState<{ version: typeof versions[0]; chapter: Chapter | null }[]>([]);
   const [isLoadingCompare, setIsLoadingCompare] = useState(false);
+  const [notePreviewVerse, setNotePreviewVerse] = useState<number | null>(null);
+  const [notePreviewNotes, setNotePreviewNotes] = useState<Note[]>([]);
+  const [showNoteSelector, setShowNoteSelector] = useState(false);
+  const [noteSelectorVerse, setNoteSelectorVerse] = useState<number | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const chapterScrollRef = useRef<ScrollView>(null);
   const versePositionsRef = useRef<{ [key: number]: number }>({});
@@ -454,6 +460,49 @@ export default function BibleScreen() {
     setIsLoadingCompare(false);
   };
 
+  const getVerseRef = (verseNum: number): string => {
+    if (!localCurrentBook) return '';
+    const bookNumber = parseInt(localCurrentBook.id.replace('xml_', ''));
+    return `${localCurrentBook.id}_${localChapterNum}_${verseNum}`;
+  };
+
+  const handleNotePress = (verseNum: number) => {
+    const verseRef = getVerseRef(verseNum);
+    const verseNotes = getNotesForVerse(verseRef);
+    
+    if (verseNotes.length === 0) {
+      router.push(`/note?verseRefs=${JSON.stringify([verseRef])}`);
+    } else if (verseNotes.length === 1) {
+      router.push(`/note?noteId=${verseNotes[0].id}`);
+    } else {
+      setNoteSelectorVerse(verseNum);
+      setShowNoteSelector(true);
+    }
+  };
+
+  const handleNoteLongPress = (verseNum: number) => {
+    const verseRef = getVerseRef(verseNum);
+    const verseNotes = getNotesForVerse(verseRef);
+    setNotePreviewNotes(verseNotes);
+    setNotePreviewVerse(verseNum);
+  };
+
+  const closeNotePreview = () => {
+    setNotePreviewVerse(null);
+    setNotePreviewNotes([]);
+  };
+
+  const handleNoteSelectorSelect = (noteId: string) => {
+    setShowNoteSelector(false);
+    router.push(`/note?noteId=${noteId}`);
+  };
+
+  const handleAddNoteFromSelection = () => {
+    const verseRefs = Array.from(selectedVerses).map(v => getVerseRef(v));
+    router.push(`/note?verseRefs=${JSON.stringify(verseRefs)}`);
+    clearSelection();
+  };
+
   const handleVerseSelect = (verse: number) => {
     setLocalCurrentVerse(verse);
     setShowVerseModal(false);
@@ -758,6 +807,9 @@ export default function BibleScreen() {
               const verseNum = item.number || 0;
               const isSelected = selectedVerses.has(verseNum);
               const highlightColor = highlightedVerses.get(verseNum);
+              const verseRef = getVerseRef(verseNum);
+              const verseNotes = getNotesForVerse(verseRef);
+              const hasNotes = verseNotes.length > 0;
 
               return (
                 <View key={index}>
@@ -784,6 +836,15 @@ export default function BibleScreen() {
                     <Text style={[styles.verseText, isSelected && styles.verseTextSelected]}>
                       {renderVerseContent(item.content || [])}
                     </Text>
+                    {hasNotes && (
+                      <TouchableOpacity
+                        style={styles.noteIcon}
+                        onPress={() => handleNotePress(verseNum)}
+                        onLongPress={() => handleNoteLongPress(verseNum)}
+                      >
+                        <Ionicons name="document-text" size={14} color={PRIMARY_COLOR} />
+                      </TouchableOpacity>
+                    )}
                   </TouchableOpacity>
                 </View>
               );
@@ -816,6 +877,9 @@ export default function BibleScreen() {
             </TouchableOpacity>
             <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowCreateDevotionModal(true)}>
               <Text style={styles.toolbarButtonText}>Devotion</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.toolbarButton} onPress={handleAddNoteFromSelection}>
+              <Text style={styles.toolbarButtonText}>Note</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.toolbarIconButton} onPress={clearSelection}>
               <Ionicons name="close-circle-outline" size={20} color="#ff4444" />
@@ -1021,6 +1085,73 @@ export default function BibleScreen() {
         </View>
       </Modal>
 
+      {/* Note Preview Bubble */}
+      {notePreviewVerse !== null && (
+        <TouchableOpacity 
+          style={styles.notePreviewOverlay} 
+          activeOpacity={1} 
+          onPress={closeNotePreview}
+        >
+          <View style={[styles.notePreviewBubble, isDark && styles.notePreviewBubbleDark]}>
+            <View style={styles.notePreviewHeader}>
+              <Text style={styles.notePreviewTitle}>
+                {notePreviewNotes.length} {notePreviewNotes.length === 1 ? 'Note' : 'Notes'}
+              </Text>
+              <TouchableOpacity onPress={closeNotePreview}>
+                <Ionicons name="close" size={20} color={isDark ? '#fff' : '#000'} />
+              </TouchableOpacity>
+            </View>
+            {notePreviewNotes.map((note) => (
+              <TouchableOpacity 
+                key={note.id} 
+                style={styles.notePreviewItem}
+                onPress={() => {
+                  closeNotePreview();
+                  router.push(`/note?noteId=${note.id}`);
+                }}
+              >
+                <Text style={styles.notePreviewText} numberOfLines={2}>
+                  {note.content}
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={PRIMARY_COLOR} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Note Selector Modal (multiple notes) */}
+      <Modal visible={showNoteSelector} animationType="slide" transparent>
+        <TouchableOpacity 
+          style={styles.noteSelectorOverlay} 
+          activeOpacity={1} 
+          onPress={() => setShowNoteSelector(false)}
+        >
+          <View style={[styles.noteSelectorContent, isDark && styles.noteSelectorContentDark]}>
+            <View style={styles.noteSelectorHeader}>
+              <Text style={styles.noteSelectorTitle}>Select Note</Text>
+              <TouchableOpacity onPress={() => setShowNoteSelector(false)}>
+                <Ionicons name="close" size={24} color={isDark ? '#fff' : '#000'} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {noteSelectorVerse !== null && getNotesForVerse(getVerseRef(noteSelectorVerse)).map((note) => (
+                <TouchableOpacity 
+                  key={note.id} 
+                  style={styles.noteSelectorItem}
+                  onPress={() => handleNoteSelectorSelect(note.id)}
+                >
+                  <Text style={styles.noteSelectorItemText} numberOfLines={2}>
+                    {note.content}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={PRIMARY_COLOR} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       <Modal visible={showCreateDevotionModal} animationType="slide">
         <CreateDevotionModal
           selectedVerses={selectedVerses}
@@ -1078,7 +1209,9 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 12,
     padding: 8,
+    paddingBottom: 20,
     borderRadius: 4,
+    position: 'relative',
   },
   verseNumber: {
     width: 30,
@@ -1091,6 +1224,100 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     fontSize: fontSize,
     lineHeight: fontSize + 10,
     color: isDark ? '#ddd' : '#333',
+  },
+  noteIcon: {
+    position: 'absolute',
+    right: 4,
+    bottom: 4,
+    padding: 2,
+  },
+  notePreviewOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  notePreviewBubble: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    maxWidth: '80%',
+    minWidth: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  notePreviewBubbleDark: {
+    backgroundColor: '#2a2a2a',
+  },
+  notePreviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notePreviewTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: isDark ? '#fff' : '#000',
+  },
+  notePreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#333' : '#e0e0e0',
+  },
+  notePreviewText: {
+    flex: 1,
+    fontSize: 14,
+    color: isDark ? '#ddd' : '#333',
+  },
+  noteSelectorOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  noteSelectorContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '60%',
+  },
+  noteSelectorContentDark: {
+    backgroundColor: '#1a1a1a',
+  },
+  noteSelectorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#333' : '#e0e0e0',
+  },
+  noteSelectorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: isDark ? '#fff' : '#000',
+  },
+  noteSelectorItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#333' : '#e0e0e0',
+  },
+  noteSelectorItemText: {
+    flex: 1,
+    fontSize: 16,
+    color: isDark ? '#fff' : '#000',
   },
   verseHighlight: {
     backgroundColor: isDark ? '#1a2a4a' : '#e8f0ff',

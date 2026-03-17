@@ -212,6 +212,7 @@ git push -u origin feature/my-feature
 - [x] Font Size Adjustment - Change verse text size
 - [x] Share devotionals - Share devotional as formatted text
 - [x] Edit date - Allow changing creation date of devotional
+- [x] Notes/Annotations - Add personal notes to verses
 
 ### In Progress
 
@@ -226,7 +227,6 @@ git push -u origin feature/my-feature
 - Search within chapter - Scroll positioning issue (complex to fix)
 - Reading History - List recently read passages
 - Bookmarks/Favorites - Save favorite verses for quick access
-- Notes/Annotations - Add personal notes to verses
 - Night mode - Separate blue light reduction mode
 - Reading Goals - Set daily reading targets
 
