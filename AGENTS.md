@@ -11,6 +11,7 @@ A React Native/Expo Bible reading application with multiple translations, offlin
 - **Always update CHANGELOG.md** before creating PR
 - **Run typecheck before committing**: `pnpm run typecheck`
 - **Use pnpm** for package management
+- **Use native git CLI only** (`git push`, `git commit`) - GitHub CLI (`gh`) not available
 - **Inform user before switching solutions** (storage, APIs, libraries)
 
 ---
@@ -114,7 +115,11 @@ docs/
 6. **Update**: CHANGELOG.md + docs/TODOS.md
 7. **Commit**: `git add . && git commit -m "Description"`
 8. **Push**: `git push -u origin branch-name`
-9. **PR**: Create PR on GitHub, user merges
+9. **PR**: Push branch manually (no `gh` CLI), create PR via GitHub web UI
+   - Push: `git push -u origin branch-name`
+   - GitHub outputs PR URL - visit in browser to create manually
+   - Or: `https://github.com/eydamson-dev/hazon/pull/new/BRANCH-NAME`
+   - User merges on GitHub
 
 ---
 
