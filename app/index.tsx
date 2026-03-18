@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Alert, Clipboard, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, StyleSheet, Share, Alert, Clipboard, ActivityIndicator, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useBible } from '../src/store/BibleContext';
 import { useTheme } from '../src/store/ThemeContext';
@@ -81,6 +81,9 @@ export default function BibleScreen() {
   const [showAddToNoteModal, setShowAddToNoteModal] = useState(false);
   const [pendingVerseRefs, setPendingVerseRefs] = useState<string[]>([]);
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchMatches, setSearchMatches] = useState<number[]>([]);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
   const scrollViewRef = useRef<ScrollView>(null);
   const chapterScrollRef = useRef<ScrollView>(null);
   const versePositionsRef = useRef<{ [key: number]: number }>({});
@@ -783,6 +786,54 @@ export default function BibleScreen() {
             }}
           >
             <Text style={styles.addTabButtonText}>+</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {isSearchMode && (
+        <View 
+          style={[
+            styles.searchBarContainer, 
+            isDark && styles.searchBarContainerDark,
+          ]}
+        >
+          <TextInput
+            style={[styles.searchBarInput, isDark && styles.searchBarInputDark]}
+            placeholder="Search this chapter..."
+            placeholderTextColor={isDark ? '#888' : '#666'}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          <Text style={[styles.searchBarCounter, isDark && styles.searchBarCounterDark]}>
+            {currentMatchIndex >= 0 ? `${currentMatchIndex + 1}/${searchMatches.length}` : '0/0'}
+          </Text>
+          <TouchableOpacity
+            style={styles.searchBarNavButton}
+            onPress={() => {
+              // Navigate up - Task 5 implementation pending
+            }}
+          >
+            <Ionicons name="chevron-up" size={20} color={PRIMARY_COLOR} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.searchBarNavButton}
+            onPress={() => {
+              // Navigate down - Task 5 implementation pending
+            }}
+          >
+            <Ionicons name="chevron-down" size={20} color={PRIMARY_COLOR} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.searchBarCloseButton}
+            onPress={() => {
+              setIsSearchMode(false);
+              setSearchQuery('');
+              setSearchMatches([]);
+              setCurrentMatchIndex(-1);
+            }}
+          >
+            <Ionicons name="close" size={20} color={isDark ? '#fff' : '#000'} />
           </TouchableOpacity>
         </View>
       )}
@@ -1943,5 +1994,58 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: isDark ? '#1e1e1e' : '#f5f5f5',
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? '#333' : '#e0e0e0',
+    gap: 8,
+  },
+  searchBarContainerDark: {
+    backgroundColor: '#1e1e1e',
+    borderBottomColor: '#333',
+  },
+  searchBarInput: {
+    flex: 1,
+    backgroundColor: isDark ? '#2a2a2a' : '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    color: isDark ? '#ddd' : '#333',
+  },
+  searchBarInputDark: {
+    backgroundColor: '#2a2a2a',
+    color: '#ddd',
+  },
+  searchBarCounter: {
+    fontSize: 14,
+    color: isDark ? '#888' : '#666',
+    fontWeight: '500',
+    minWidth: 50,
+    textAlign: 'center',
+  },
+  searchBarCounterDark: {
+    color: '#888',
+  },
+  searchBarNavButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  searchBarCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: isDark ? '#333' : '#e0e0e0',
   },
 });

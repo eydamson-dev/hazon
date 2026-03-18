@@ -39,45 +39,45 @@
 
 ---
 
-### Task 2: Create Search Bar UI
+### Task 2: Create Search Bar UI ✅ COMPLETED
 **Goal**: Build full search bar component below book selector bar
 
 **UI Components (left to right)**:
-1. **[←]** Back/Close button - exits search mode
-2. **TextInput** - "Search this chapter..." placeholder
+1. **TextInput** - "Search this chapter..." placeholder
+2. **"X/Y"** - Match counter (current/total) - *after text input*
 3. **[↑]** Up arrow - navigate to previous match
-4. **"X/Y"** - Match counter (current/total)
-5. **[↓]** Down arrow - navigate to next match
-6. **[X]** Close button - alternative way to exit
+4. **[↓]** Down arrow - navigate to next match
+5. **[X]** Close button - exits search mode
 
 **Positioning**:
 - Appears BELOW book selector bar (between it and verse content)
 - Full width of screen
 - Height: ~50px
-- Background: Same as book selector bar or slightly different
+- Background: Light gray or app background
 
 **Styling**:
 - Background: Light gray or match app background
 - Border bottom: Subtle separator line
-- Icons: 20-24px, PRIMARY_COLOR
-- TextInput: Flex grow, left padding
+- Icons: 20px, PRIMARY_COLOR
+- TextInput: Flex grow, padding, light background box
 - Counter: Fixed width, centered
 
 **State Management**:
-- `searchQuery: string` - controlled input
-- `searchMatches: number[]` - empty initially
-- `currentMatchIndex: number` - -1 initially
+- `searchQuery: string` - controlled input ✅
+- `searchMatches: number[]` - empty initially ✅
+- `currentMatchIndex: number` - -1 initially ✅
 
 **Acceptance Criteria**:
-- [ ] Search bar renders when `isSearchMode` is true
-- [ ] TextInput accepts keyboard input
-- [ ] Up/Down arrows visible and tappable
-- [ ] Counter shows "0/0" initially
-- [ ] Close buttons exit search mode
-- [ ] Keyboard dismisses on scroll or outside tap
-- [ ] Dark mode support
+- ✅ Search bar renders when `isSearchMode` is true
+- ✅ TextInput accepts keyboard input
+- ✅ Up/Down arrows visible and tappable
+- ✅ Counter shows "0/0" initially
+- ✅ Close button exits search mode
+- ✅ Dark mode support
+- ⏳ Keyboard dismisses on scroll or outside tap (Task 3/5)
 
 **Estimated Time**: 30 minutes
+**Completed**: 2026-03-18 ✅
 
 ---
 
