@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../src/store/ThemeContext';
-import DevotionalsContent from './journals/devotionals';
-import NotesContent from './journals/notes';
+import DevotionalsContent from '../src/components/journals/devotionals';
+import NotesContent from '../src/components/journals/notes';
 
 const PRIMARY_COLOR = '#304080';
 

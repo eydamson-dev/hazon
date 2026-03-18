@@ -3,12 +3,12 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, TextInput,
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../src/store/ThemeContext';
-import { useDevotional } from '../../src/store/DevotionalContext';
-import { useBible } from '../../src/store/BibleContext';
-import EmptyState from '../../src/components/EmptyState';
-import type { Devotion, VerseRef } from '../../src/types/devotional';
-import type { VerseContent } from '../../src/types/bible';
+import { useTheme } from '../../store/ThemeContext';
+import { useDevotional } from '../../store/DevotionalContext';
+import { useBible } from '../../store/BibleContext';
+import EmptyState from '../../components/EmptyState';
+import type { Devotion, VerseRef } from '../../types/devotional';
+import type { VerseContent } from '../../types/bible';
 
 const PRIMARY_COLOR = '#304080';
 
@@ -87,7 +87,7 @@ export default function DevotionalsContent() {
     
     setRefreshingVerses(true);
     try {
-      const { getBebliaChapter } = await import('../../src/services/bible');
+      const { getBebliaChapter } = await import('../../services/bible');
       const updatedVerseRefs: VerseRef[] = [];
       const newCache: Record<string, string> = {};
       

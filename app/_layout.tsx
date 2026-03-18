@@ -62,8 +62,6 @@ function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen name="devotional" options={{ href: null }} />
-      <Tabs.Screen name="notes" options={{ href: null }} />
       <Tabs.Screen name="note" options={{ href: null }} />
     </Tabs>
   );
