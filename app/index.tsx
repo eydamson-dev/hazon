@@ -80,6 +80,7 @@ export default function BibleScreen() {
   const [noteSelectorVerse, setNoteSelectorVerse] = useState<number | null>(null);
   const [showAddToNoteModal, setShowAddToNoteModal] = useState(false);
   const [pendingVerseRefs, setPendingVerseRefs] = useState<string[]>([]);
+  const [isSearchMode, setIsSearchMode] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const chapterScrollRef = useRef<ScrollView>(null);
   const versePositionsRef = useRef<{ [key: number]: number }>({});
@@ -768,6 +769,12 @@ export default function BibleScreen() {
               ))}
             </View>
           </ScrollView>
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={() => setIsSearchMode(!isSearchMode)}
+          >
+            <Ionicons name="search" size={24} color={PRIMARY_COLOR} />
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.addTabButton}
             onPress={() => {
@@ -1800,6 +1807,14 @@ const createStyles = (isDark: boolean, fontSize: number) => StyleSheet.create({
   tabCloseText: {
     fontSize: 10,
     color: '#666',
+  },
+  searchButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
   },
   addTabButton: {
     width: 32,

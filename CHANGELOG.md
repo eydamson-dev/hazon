@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Clickable verse references in devotionals - navigate to verse in Bible
 
 ### Added
+- **Search icon button** - Added search icon to tab bar for chapter-level search feature (Task 1/5)
 - **Better empty states** - Added EmptyState component with icons for notes, devotionals, and search
 - Swipe-to-delete on notes - Swipe left to reveal delete action with confirmation
 - Note count badge - Show count badge on verse note icons when > 1 note
